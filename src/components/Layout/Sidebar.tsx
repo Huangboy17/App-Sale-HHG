@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { useAuthStore } from '../../store/authStore';
-import { useUiStore } from '../../store/uiStore';
+import { useAuthStore } from '../../stores/authStore';
+import { useUiStore } from '../../stores/uiStore';
 import { NAV_ITEMS } from '../../lib/constants';
 import * as Icons from 'lucide-react';
 
@@ -28,8 +28,10 @@ export const Sidebar: React.FC = () => {
       </div>
 
       <nav className="sidebar-nav">
-        {NAV_ITEMS.map((item) => (
-          item.disabled ? (
+        {NAV_ITEMS.map((item) => {
+          const disabledPaths = ['/quotations', '/orders', '/contracts', '/payments', '/deliveries'];
+          const isDisabled = disabledPaths.includes(item.path);
+          return isDisabled ? (
             <div key={item.path} className="nav-item nav-item-disabled">
               <span className="nav-icon">{renderIcon(item.icon)}</span>
               {!sidebarCollapsed && (
@@ -48,19 +50,19 @@ export const Sidebar: React.FC = () => {
               <span className="nav-icon">{renderIcon(item.icon)}</span>
               {!sidebarCollapsed && <span className="nav-label">{item.label}</span>}
             </NavLink>
-          )
-        ))}
+          );
+        })}
       </nav>
 
       <div className="sidebar-footer">
         <div className="user-info-wrapper">
           <div className="avatar">
-            {user?.name?.charAt(0).toUpperCase() || 'U'}
+            {user?.full_name?.charAt(0).toUpperCase() || 'U'}
           </div>
           {!sidebarCollapsed && (
             <div className="user-details">
-              <div className="user-name">{user?.name || 'Người dùng'}</div>
-              <div className="user-role">{user?.role === 'admin' ? 'Quản trị viên' : 'Nhân viên'}</div>
+              <div className="user-name">{user?.full_name || 'Người dùng'}</div>
+              <div className="user-role">{user?.role === 'ADMIN' ? 'Quản trị viên' : 'Nhân viên'}</div>
             </div>
           )}
         </div>

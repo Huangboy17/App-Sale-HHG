@@ -9,18 +9,15 @@ interface StockIndicatorProps {
 export const StockIndicator: React.FC<StockIndicatorProps> = ({
   available,
   requested = 0,
-  total
+  total: _total
 }) => {
-  let status: 'in-stock' | 'low-stock' | 'out-of-stock' = 'in-stock';
   let label = 'Còn hàng';
   let color = 'success';
 
   if (available === 0) {
-    status = 'out-of-stock';
     label = 'Hết hàng';
     color = 'danger';
   } else if (requested > available) {
-    status = 'low-stock';
     label = 'Không đủ hàng';
     color = 'warning';
   }

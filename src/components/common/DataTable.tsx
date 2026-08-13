@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Search, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
-import { TableColumn } from '../../lib/types';
+import type { TableColumn } from '../../lib/types';
 
 interface DataTableProps<T> {
   data: T[];

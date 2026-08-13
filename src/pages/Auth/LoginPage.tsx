@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User } from '../../lib/types';
+import type { User } from '../../lib/types';
 import { db } from '../../lib/database';
 import { useAuthStore } from '../../stores/authStore';
 import { LogIn } from 'lucide-react';
@@ -26,7 +26,7 @@ export default function LoginPage() {
   }, []);
 
   const handleLogin = (user: User) => {
-    login(user);
+    login(user.id);
     navigate('/');
   };
 

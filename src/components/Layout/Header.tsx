@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLocation } from 'react-router-dom';
-import { useAuthStore } from '../../store/authStore';
+import { useAuthStore } from '../../stores/authStore';
 import { LogOut } from 'lucide-react';
 
 const routeTitles: Record<string, string> = {
@@ -24,9 +24,9 @@ export const Header: React.FC = () => {
       </div>
       <div className="header-right">
         <div className="user-profile-header">
-          <span className="user-name-header">{user?.name || 'Người dùng'}</span>
+          <span className="user-name-header">{user?.full_name || 'Người dùng'}</span>
           <span className="badge badge-primary role-badge">
-            {user?.role === 'admin' ? 'Quản trị viên' : 'Nhân viên'}
+            {user?.role === 'ADMIN' ? 'Quản trị viên' : 'Nhân viên'}
           </span>
         </div>
         <button onClick={logout} className="btn-icon btn-logout" title="Đăng xuất">

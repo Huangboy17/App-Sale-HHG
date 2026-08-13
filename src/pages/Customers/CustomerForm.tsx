@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useCustomerStore } from '../../stores/customerStore';
-import { Customer, User } from '../../lib/types';
+import type { Customer, User } from '../../lib/types';
 import { CUSTOMER_SOURCES } from '../../lib/constants';
 import { db } from '../../lib/database';
-import Modal from '../../components/common/Modal';
+import { Modal } from '../../components/common/Modal';
 
 interface CustomerFormProps {
   isOpen: boolean;
@@ -174,8 +174,8 @@ export default function CustomerForm({ isOpen, onClose, customer }: CustomerForm
               value={formData.source}
               onChange={(e) => setFormData({...formData, source: e.target.value as any})}
             >
-              {Object.entries(CUSTOMER_SOURCES).map(([val, label]) => (
-                <option key={val} value={val}>{label}</option>
+              {CUSTOMER_SOURCES.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
               ))}
             </select>
           </div>

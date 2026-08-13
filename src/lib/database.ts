@@ -68,7 +68,7 @@ class Database {
   }
 
   getProductByCode(code: string): Product | undefined {
-    const product = this.getProducts().find(p => p.code === code);
+    const product = this.getProducts().find(p => p.product_code === code);
     return product ? this.computeProductFields(product) : undefined;
   }
 
@@ -108,8 +108,8 @@ class Database {
   searchProducts(query: string): Product[] {
     const lowerQuery = query.toLowerCase();
     return this.getProducts().filter(p => 
-      p.name.toLowerCase().includes(lowerQuery) || 
-      p.code.toLowerCase().includes(lowerQuery) ||
+      p.product_name.toLowerCase().includes(lowerQuery) || 
+      p.product_code.toLowerCase().includes(lowerQuery) ||
       (p.brand && p.brand.toLowerCase().includes(lowerQuery))
     );
   }
@@ -164,7 +164,7 @@ class Database {
   searchCustomers(query: string): Customer[] {
     const lowerQuery = query.toLowerCase();
     return this.getCustomers().filter(c => 
-      c.name.toLowerCase().includes(lowerQuery) || 
+      c.customer_name.toLowerCase().includes(lowerQuery) || 
       (c.phone && c.phone.includes(query)) ||
       (c.email && c.email.toLowerCase().includes(lowerQuery))
     );
@@ -172,7 +172,7 @@ class Database {
 
   checkDuplicateCustomer(name: string, phone?: string, email?: string): Customer | undefined {
     return this.getCustomers().find(c => 
-      c.name.toLowerCase() === name.toLowerCase() ||
+      c.customer_name.toLowerCase() === name.toLowerCase() ||
       (phone && c.phone === phone) ||
       (email && c.email === email)
     );
@@ -304,52 +304,52 @@ class Database {
     
     // Users
     const users: User[] = [
-      { id: uuidv4(), name: 'Admin', role: 'ADMIN', email: 'admin@hhg.vn', status: 'ACTIVE', created_at: now, updated_at: now },
-      { id: uuidv4(), name: 'Nguyễn Văn A', role: 'SALE', email: 'nva@hhg.vn', status: 'ACTIVE', created_at: now, updated_at: now },
-      { id: uuidv4(), name: 'Trần Thị B', role: 'SALE', email: 'ttb@hhg.vn', status: 'ACTIVE', created_at: now, updated_at: now },
+      { id: uuidv4(), full_name: 'Admin', role: 'ADMIN', email: 'admin@hhg.vn', is_active: true, created_at: now, updated_at: now },
+      { id: uuidv4(), full_name: 'Nguyễn Văn A', role: 'SALE', email: 'nva@hhg.vn', is_active: true, created_at: now, updated_at: now },
+      { id: uuidv4(), full_name: 'Trần Thị B', role: 'SALE', email: 'ttb@hhg.vn', is_active: true, created_at: now, updated_at: now },
     ];
     this.set(KEYS.USERS, users);
 
     // Products
     const products: Product[] = [
-      { id: uuidv4(), code: 'PROD-001', name: 'Máy nén khí trục vít', category: 'Thiết bị công nghiệp', unit: 'Cái', base_price: 150000000, vat_rate: 0.08, max_discount_rate: 0.15, brand: 'SMC', stock_quantity: 10, reserved_quantity: 2, created_at: now, updated_at: now, dp_price: 0, available_quantity: 0 },
-      { id: uuidv4(), code: 'PROD-002', name: 'Bơm chìm giếng khoan', category: 'Bơm', unit: 'Cái', base_price: 45000000, vat_rate: 0.08, max_discount_rate: 0.10, brand: 'Grundfos', stock_quantity: 25, reserved_quantity: 5, created_at: now, updated_at: now, dp_price: 0, available_quantity: 0 },
-      { id: uuidv4(), code: 'PROD-003', name: 'Van điện từ tuyến tính', category: 'Van', unit: 'Cái', base_price: 12000000, vat_rate: 0.08, max_discount_rate: 0.20, brand: 'Danfoss', stock_quantity: 50, reserved_quantity: 10, created_at: now, updated_at: now, dp_price: 0, available_quantity: 0 },
-      { id: uuidv4(), code: 'PROD-004', name: 'Đồng hồ đo áp suất điện tử', category: 'Đồng hồ', unit: 'Cái', base_price: 8500000, vat_rate: 0.08, max_discount_rate: 0.15, brand: 'Endress+Hauser', stock_quantity: 40, reserved_quantity: 0, created_at: now, updated_at: now, dp_price: 0, available_quantity: 0 },
-      { id: uuidv4(), code: 'PROD-005', name: 'Biến tần 3 pha 15kW', category: 'Thiết bị điện', unit: 'Bộ', base_price: 22000000, vat_rate: 0.08, max_discount_rate: 0.12, brand: 'Siemens', stock_quantity: 15, reserved_quantity: 3, created_at: now, updated_at: now, dp_price: 0, available_quantity: 0 },
-      { id: uuidv4(), code: 'PROD-006', name: 'Bộ lọc khí nén', category: 'Phụ kiện', unit: 'Cái', base_price: 5000000, vat_rate: 0.08, max_discount_rate: 0.10, brand: 'SMC', stock_quantity: 100, reserved_quantity: 20, created_at: now, updated_at: now, dp_price: 0, available_quantity: 0 },
-      { id: uuidv4(), code: 'PROD-007', name: 'Bơm màng khí nén', category: 'Bơm', unit: 'Cái', base_price: 32000000, vat_rate: 0.08, max_discount_rate: 0.15, brand: 'Yamada', stock_quantity: 12, reserved_quantity: 1, created_at: now, updated_at: now, dp_price: 0, available_quantity: 0 },
-      { id: uuidv4(), code: 'PROD-008', name: 'Cảm biến lưu lượng siêu âm', category: 'Cảm biến', unit: 'Bộ', base_price: 55000000, vat_rate: 0.08, max_discount_rate: 0.18, brand: 'Siemens', stock_quantity: 8, reserved_quantity: 0, created_at: now, updated_at: now, dp_price: 0, available_quantity: 0 },
-      { id: uuidv4(), code: 'PROD-009', name: 'Motor điện 3 pha 11kW', category: 'Động cơ', unit: 'Cái', base_price: 18000000, vat_rate: 0.08, max_discount_rate: 0.10, brand: 'ABB', stock_quantity: 20, reserved_quantity: 5, created_at: now, updated_at: now, dp_price: 0, available_quantity: 0 },
-      { id: uuidv4(), code: 'PROD-010', name: 'Tủ điện điều khiển', category: 'Tủ điện', unit: 'Tủ', base_price: 75000000, vat_rate: 0.08, max_discount_rate: 0.20, brand: 'HHG', stock_quantity: 5, reserved_quantity: 1, created_at: now, updated_at: now, dp_price: 0, available_quantity: 0 },
+      { id: uuidv4(), product_code: 'PROD-001', product_name: 'Máy nén khí trục vít', product_group: 'Thiết bị công nghiệp', unit: 'Cái', base_price: 150000000, vat_rate: 0.08, max_discount_rate: 0.15, brand: 'SMC', stock_quantity: 10, reserved_quantity: 2, status: 'ACTIVE', created_at: now, updated_at: now, dp_price: 0, available_quantity: 0 },
+      { id: uuidv4(), product_code: 'PROD-002', product_name: 'Bơm chìm giếng khoan', product_group: 'Bơm', unit: 'Cái', base_price: 45000000, vat_rate: 0.08, max_discount_rate: 0.10, brand: 'Grundfos', stock_quantity: 25, reserved_quantity: 5, status: 'ACTIVE', created_at: now, updated_at: now, dp_price: 0, available_quantity: 0 },
+      { id: uuidv4(), product_code: 'PROD-003', product_name: 'Van điện từ tuyến tính', product_group: 'Van', unit: 'Cái', base_price: 12000000, vat_rate: 0.08, max_discount_rate: 0.20, brand: 'Danfoss', stock_quantity: 50, reserved_quantity: 10, status: 'ACTIVE', created_at: now, updated_at: now, dp_price: 0, available_quantity: 0 },
+      { id: uuidv4(), product_code: 'PROD-004', product_name: 'Đồng hồ đo áp suất điện tử', product_group: 'Đồng hồ', unit: 'Cái', base_price: 8500000, vat_rate: 0.08, max_discount_rate: 0.15, brand: 'Endress+Hauser', stock_quantity: 40, reserved_quantity: 0, status: 'ACTIVE', created_at: now, updated_at: now, dp_price: 0, available_quantity: 0 },
+      { id: uuidv4(), product_code: 'PROD-005', product_name: 'Biến tần 3 pha 15kW', product_group: 'Thiết bị điện', unit: 'Bộ', base_price: 22000000, vat_rate: 0.08, max_discount_rate: 0.12, brand: 'Siemens', stock_quantity: 15, reserved_quantity: 3, status: 'ACTIVE', created_at: now, updated_at: now, dp_price: 0, available_quantity: 0 },
+      { id: uuidv4(), product_code: 'PROD-006', product_name: 'Bộ lọc khí nén', product_group: 'Phụ kiện', unit: 'Cái', base_price: 5000000, vat_rate: 0.08, max_discount_rate: 0.10, brand: 'SMC', stock_quantity: 100, reserved_quantity: 20, status: 'ACTIVE', created_at: now, updated_at: now, dp_price: 0, available_quantity: 0 },
+      { id: uuidv4(), product_code: 'PROD-007', product_name: 'Bơm màng khí nén', product_group: 'Bơm', unit: 'Cái', base_price: 32000000, vat_rate: 0.08, max_discount_rate: 0.15, brand: 'Yamada', stock_quantity: 12, reserved_quantity: 1, status: 'ACTIVE', created_at: now, updated_at: now, dp_price: 0, available_quantity: 0 },
+      { id: uuidv4(), product_code: 'PROD-008', product_name: 'Cảm biến lưu lượng siêu âm', product_group: 'Cảm biến', unit: 'Bộ', base_price: 55000000, vat_rate: 0.08, max_discount_rate: 0.18, brand: 'Siemens', stock_quantity: 8, reserved_quantity: 0, status: 'ACTIVE', created_at: now, updated_at: now, dp_price: 0, available_quantity: 0 },
+      { id: uuidv4(), product_code: 'PROD-009', product_name: 'Motor điện 3 pha 11kW', product_group: 'Động cơ', unit: 'Cái', base_price: 18000000, vat_rate: 0.08, max_discount_rate: 0.10, brand: 'ABB', stock_quantity: 20, reserved_quantity: 5, status: 'ACTIVE', created_at: now, updated_at: now, dp_price: 0, available_quantity: 0 },
+      { id: uuidv4(), product_code: 'PROD-010', product_name: 'Tủ điện điều khiển', product_group: 'Tủ điện', unit: 'Tủ', base_price: 75000000, vat_rate: 0.08, max_discount_rate: 0.20, brand: 'HHG', stock_quantity: 5, reserved_quantity: 1, status: 'ACTIVE', created_at: now, updated_at: now, dp_price: 0, available_quantity: 0 },
     ].map(p => this.computeProductFields(p));
     this.set(KEYS.PRODUCTS, products);
 
     // Customers
     const customers: Customer[] = [
-      { id: uuidv4(), code: 'CUST-001', name: 'Công ty Cổ phần Sữa Việt Nam (Vinamilk)', type: 'Doanh nghiệp lớn', industry: 'Thực phẩm', phone: '028 5415 5555', email: 'contact@vinamilk.com.vn', address: '10 Tân Trào, Tân Phú, Quận 7, TP.HCM', tax_code: '0300588569', status: 'ACTIVE', created_at: now, updated_at: now },
-      { id: uuidv4(), code: 'CUST-002', name: 'Tổng công ty Cổ phần Bia - Rượu - Nước giải khát Sài Gòn', type: 'Doanh nghiệp lớn', industry: 'Thực phẩm', phone: '028 3829 4081', email: 'sabeco@sabeco.com.vn', address: '12 Thi Sách, Bến Nghé, Quận 1, TP.HCM', tax_code: '0300583659', status: 'ACTIVE', created_at: now, updated_at: now },
-      { id: uuidv4(), code: 'CUST-003', name: 'Công ty TNHH Nhựa Long Thành', type: 'SME', industry: 'Nhựa', phone: '1900 3333', email: 'info@longthanhplastic.com', address: '130 Tháp Mười, Phường 2, Quận 6, TP.HCM', tax_code: '0302222222', status: 'ACTIVE', created_at: now, updated_at: now },
-      { id: uuidv4(), code: 'CUST-004', name: 'Công ty Cổ phần Nước Môi trường Bình Dương', type: 'Nhà nước', industry: 'Xử lý nước', phone: '0274 3827 789', email: 'biwase@biwase.com.vn', address: '11 Ngô Văn Trị, Phú Lợi, Thủ Dầu Một, Bình Dương', tax_code: '3700145694', status: 'ACTIVE', created_at: now, updated_at: now },
-      { id: uuidv4(), code: 'CUST-005', name: 'Tập đoàn Hòa Phát', type: 'Tập đoàn', industry: 'Thép', phone: '024 3974 7749', email: 'pr@hoaphat.com.vn', address: '66 Nguyễn Du, Hai Bà Trưng, Hà Nội', tax_code: '0101234567', status: 'ACTIVE', created_at: now, updated_at: now },
+      { id: uuidv4(), customer_name: 'Công ty Cổ phần Sữa Việt Nam (Vinamilk)', company_name: 'Vinamilk', phone: '028 5415 5555', email: 'contact@vinamilk.com.vn', address: '10 Tân Trào, Tân Phú, Quận 7, TP.HCM', tax_code: '0300588569', is_active: true, created_at: now, updated_at: now },
+      { id: uuidv4(), customer_name: 'Tổng công ty Cổ phần Bia - Rượu - Nước giải khát Sài Gòn', company_name: 'Sabeco', phone: '028 3829 4081', email: 'sabeco@sabeco.com.vn', address: '12 Thi Sách, Bến Nghé, Quận 1, TP.HCM', tax_code: '0300583659', is_active: true, created_at: now, updated_at: now },
+      { id: uuidv4(), customer_name: 'Công ty TNHH Nhựa Long Thành', company_name: 'Nhựa Long Thành', phone: '1900 3333', email: 'info@longthanhplastic.com', address: '130 Tháp Mười, Phường 2, Quận 6, TP.HCM', tax_code: '0302222222', is_active: true, created_at: now, updated_at: now },
+      { id: uuidv4(), customer_name: 'Công ty Cổ phần Nước Môi trường Bình Dương', company_name: 'Biwase', phone: '0274 3827 789', email: 'biwase@biwase.com.vn', address: '11 Ngô Văn Trị, Phú Lợi, Thủ Dầu Một, Bình Dương', tax_code: '3700145694', is_active: true, created_at: now, updated_at: now },
+      { id: uuidv4(), customer_name: 'Tập đoàn Hòa Phát', company_name: 'Hòa Phát', phone: '024 3974 7749', email: 'pr@hoaphat.com.vn', address: '66 Nguyễn Du, Hai Bà Trưng, Hà Nội', tax_code: '0101234567', is_active: true, created_at: now, updated_at: now },
     ];
     this.set(KEYS.CUSTOMERS, customers);
 
     // Projects
     const projects: Project[] = [
-      { id: uuidv4(), code: 'PROJ-001', name: 'Dự án Cải tạo Dây chuyền Lọc Nước Mới', customer_id: customers[3].id, status: 'IN_PROGRESS', description: 'Nâng cấp hệ thống bơm và van.', start_date: now, end_date: new Date(Date.now() + 86400000 * 30).toISOString(), created_at: now, updated_at: now },
-      { id: uuidv4(), code: 'PROJ-002', name: 'Lắp đặt Cảm biến Nhà máy Bia Vũng Tàu', customer_id: customers[1].id, status: 'PLANNING', description: 'Trang bị cảm biến siêu âm cho tank lên men.', start_date: now, end_date: new Date(Date.now() + 86400000 * 60).toISOString(), created_at: now, updated_at: now },
-      { id: uuidv4(), code: 'PROJ-003', name: 'Bảo trì Hệ thống Khí nén Nhà máy Thép', customer_id: customers[4].id, status: 'COMPLETED', description: 'Bảo trì định kỳ máy nén khí trục vít.', start_date: new Date(Date.now() - 86400000 * 15).toISOString(), end_date: now, created_at: now, updated_at: now },
+      { id: uuidv4(), project_name: 'Dự án Cải tạo Dây chuyền Lọc Nước Mới', customer_id: customers[3].id, status: 'ACTIVE', notes: 'Nâng cấp hệ thống bơm và van.', created_at: now, updated_at: now },
+      { id: uuidv4(), project_name: 'Lắp đặt Cảm biến Nhà máy Bia Vũng Tàu', customer_id: customers[1].id, status: 'ACTIVE', notes: 'Trang bị cảm biến siêu âm cho tank lên men.', created_at: now, updated_at: now },
+      { id: uuidv4(), project_name: 'Bảo trì Hệ thống Khí nén Nhà máy Thép', customer_id: customers[4].id, status: 'COMPLETED', notes: 'Bảo trì định kỳ máy nén khí trục vít.', created_at: now, updated_at: now },
     ];
     this.set(KEYS.PROJECTS, projects);
 
     // Opportunities
     const opportunities: Opportunity[] = [
-      { id: uuidv4(), code: 'OPP-0001', title: 'Cung cấp 2 Máy nén khí cho Biwase', customer_id: customers[3].id, project_id: projects[0].id, expected_value: 300000000, success_probability: 70, expected_closing_date: new Date(Date.now() + 86400000 * 15).toISOString(), status: 'PROPOSAL', sales_pic: users[1].id, created_at: now, updated_at: now },
-      { id: uuidv4(), code: 'OPP-0002', title: 'Thay thế Van điện từ lô 2 - Vinamilk', customer_id: customers[0].id, expected_value: 120000000, success_probability: 90, expected_closing_date: new Date(Date.now() + 86400000 * 7).toISOString(), status: 'NEGOTIATION', sales_pic: users[2].id, created_at: now, updated_at: now },
-      { id: uuidv4(), code: 'OPP-0003', title: 'Hệ thống Cảm biến Sabeco Vũng Tàu', customer_id: customers[1].id, project_id: projects[1].id, expected_value: 550000000, success_probability: 50, expected_closing_date: new Date(Date.now() + 86400000 * 45).toISOString(), status: 'QUALIFICATION', sales_pic: users[1].id, created_at: now, updated_at: now },
-      { id: uuidv4(), code: 'OPP-0004', title: 'Bơm chìm cấp nước xưởng 3', customer_id: customers[2].id, expected_value: 90000000, success_probability: 100, expected_closing_date: now, status: 'CLOSED_WON', sales_pic: users[2].id, created_at: now, updated_at: now },
-      { id: uuidv4(), code: 'OPP-0005', title: 'Tủ điện điều khiển phụ trợ - Hòa Phát', customer_id: customers[4].id, project_id: projects[2].id, expected_value: 150000000, success_probability: 20, expected_closing_date: new Date(Date.now() - 86400000 * 5).toISOString(), status: 'CLOSED_LOST', rejection_reason: 'Giá đối thủ rẻ hơn 15%', sales_pic: users[1].id, created_at: now, updated_at: now },
+      { id: uuidv4(), opportunity_code: 'OPP-0001', notes: 'Cung cấp 2 Máy nén khí cho Biwase', customer_id: customers[3].id, project_id: projects[0].id, estimated_value: 300000000, priority: 'HIGH', expected_close_date: new Date(Date.now() + 86400000 * 15).toISOString(), status: 'QUOTING', assigned_sale_id: users[1].id, received_date: now, created_at: now, updated_at: now },
+      { id: uuidv4(), opportunity_code: 'OPP-0002', notes: 'Thay thế Van điện từ lô 2 - Vinamilk', customer_id: customers[0].id, estimated_value: 120000000, priority: 'MEDIUM', expected_close_date: new Date(Date.now() + 86400000 * 7).toISOString(), status: 'NEGOTIATING', assigned_sale_id: users[2].id, received_date: now, created_at: now, updated_at: now },
+      { id: uuidv4(), opportunity_code: 'OPP-0003', notes: 'Hệ thống Cảm biến Sabeco Vũng Tàu', customer_id: customers[1].id, project_id: projects[1].id, estimated_value: 550000000, priority: 'HIGH', expected_close_date: new Date(Date.now() + 86400000 * 45).toISOString(), status: 'CONSULTING', assigned_sale_id: users[1].id, received_date: now, created_at: now, updated_at: now },
+      { id: uuidv4(), opportunity_code: 'OPP-0004', notes: 'Bơm chìm cấp nước xưởng 3', customer_id: customers[2].id, estimated_value: 90000000, priority: 'LOW', expected_close_date: now, status: 'WON', assigned_sale_id: users[2].id, received_date: now, created_at: now, updated_at: now },
+      { id: uuidv4(), opportunity_code: 'OPP-0005', notes: 'Tủ điện điều khiển phụ trợ - Hòa Phát', customer_id: customers[4].id, project_id: projects[2].id, estimated_value: 150000000, priority: 'MEDIUM', expected_close_date: new Date(Date.now() - 86400000 * 5).toISOString(), status: 'LOST', rejection_notes: 'Giá đối thủ rẻ hơn 15%', assigned_sale_id: users[1].id, received_date: now, created_at: now, updated_at: now },
     ];
     this.set(KEYS.OPPORTUNITIES, opportunities);
     localStorage.setItem('smapp_sequence_OPP', '5');

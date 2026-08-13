@@ -8,7 +8,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { formatVND, formatDate } from '../../lib/formatters';
 import { OPPORTUNITY_STATUS_LABELS, OPPORTUNITY_STATUS_COLORS, PRIORITY_LABELS, PRIORITY_COLORS, DEFAULT_REJECTION_REASONS } from '../../lib/constants';
 import { db } from '../../lib/database';
-import type { User, Opportunity } from '../../lib/types';
+import type { User } from '../../lib/types';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import OpportunityForm from './OpportunityForm';
 import { Modal } from '../../components/common/Modal';

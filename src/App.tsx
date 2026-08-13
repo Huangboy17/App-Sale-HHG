@@ -4,7 +4,7 @@ import { useAuthStore } from './stores/authStore';
 import { db } from './lib/database';
 
 // Layout
-import AppLayout from './components/Layout/AppLayout';
+import { AppLayout } from './components/Layout/AppLayout';
 
 // Pages
 import LoginPage from './pages/Auth/LoginPage';

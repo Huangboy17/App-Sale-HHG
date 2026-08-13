@@ -1,6 +1,7 @@
 import { db } from './database';
 import type { User, UserRole } from './types';
-import { ROLE_PERMISSIONS, Permission } from './constants';
+import { ROLE_PERMISSIONS } from './constants';
+import type { Permission } from './constants';
 
 const CURRENT_USER_KEY = 'smapp_current_user_id';
 

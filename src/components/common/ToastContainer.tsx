@@ -1,8 +1,9 @@
 import React, { useEffect } from 'react';
-import { useUiStore } from '../../store/uiStore';
+import { useUiStore } from '../../stores/uiStore';
+import type { Toast } from '../../stores/uiStore';
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
 
-const ToastItem: React.FC<{ toast: any; onRemove: (id: string) => void }> = ({ toast, onRemove }) => {
+const ToastItem: React.FC<{ toast: Toast & { title?: string }; onRemove: (id: string) => void }> = ({ toast, onRemove }) => {
   useEffect(() => {
     const timer = setTimeout(() => {
       onRemove(toast.id);
@@ -34,7 +35,7 @@ export const ToastContainer: React.FC = () => {
 
   return (
     <div className="toast-container fixed top-4 right-4 z-50 flex flex-col gap-2">
-      {toasts.map(toast => (
+      {toasts.map((toast: Toast) => (
         <ToastItem key={toast.id} toast={toast} onRemove={removeToast} />
       ))}
     </div>

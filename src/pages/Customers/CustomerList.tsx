@@ -1,10 +1,10 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Plus, Search } from 'lucide-react';
 import { useCustomerStore } from '../../stores/customerStore';
-import { Customer, User } from '../../lib/types';
+import type { Customer, User } from '../../lib/types';
 import { CUSTOMER_SOURCES } from '../../lib/constants';
 import { db } from '../../lib/database';
-import DataTable from '../../components/common/DataTable';
+import { DataTable } from '../../components/common/DataTable';
 import CustomerForm from './CustomerForm';
 
 export default function CustomerList() {
@@ -35,20 +35,23 @@ export default function CustomerList() {
   }, [customers, searchTerm]);
 
   const columns = [
-    { header: 'Tên KH', accessor: 'customer_name' as keyof Customer },
-    { header: 'Công ty', accessor: 'company_name' as keyof Customer },
-    { header: 'Người liên hệ', accessor: 'contact_person' as keyof Customer },
-    { header: 'SĐT', accessor: 'phone' as keyof Customer },
-    { header: 'Email', accessor: 'email' as keyof Customer },
+    { label: 'Tên KH', key: 'customer_name', sortable: true },
+    { label: 'Công ty', key: 'company_name', sortable: true },
+    { label: 'Người liên hệ', key: 'contact_person' },
+    { label: 'SĐT', key: 'phone' },
+    { label: 'Email', key: 'email' },
     { 
-      header: 'Nguồn', 
-      accessor: 'source' as keyof Customer,
-      render: (c: Customer) => CUSTOMER_SOURCES[c.source as keyof typeof CUSTOMER_SOURCES] || c.source
+      label: 'Nguồn', 
+      key: 'source',
+      render: (_, row: Customer) => {
+        const source = CUSTOMER_SOURCES.find(s => s.value === row.source);
+        return source ? source.label : row.source;
+      }
     },
     { 
-      header: 'Sale phụ trách', 
-      accessor: 'assigned_sale_id' as keyof Customer,
-      render: (c: Customer) => users.find(u => u.id === c.assigned_sale_id)?.full_name || '-'
+      label: 'Sale phụ trách', 
+      key: 'assigned_sale_id',
+      render: (_, row: Customer) => users.find(u => u.id === row.assigned_sale_id)?.full_name || '-'
     },
   ];
 

@@ -43,7 +43,7 @@ export default function ProjectList() {
     { 
       label: 'Khách hàng', 
       key: 'customer_id' as keyof Project,
-      render: (val: unknown, p: Project) => customers.find(c => c.id === p.customer_id)?.customer_name || '-'
+      render: (_val: unknown, p: Project) => customers.find(c => c.id === p.customer_id)?.customer_name || '-'
     },
     { label: 'Địa điểm', key: 'location' as keyof Project },
     { label: 'Chủ đầu tư', key: 'investor' as keyof Project },
@@ -51,12 +51,12 @@ export default function ProjectList() {
     { 
       label: 'Ngày cần hàng', 
       key: 'expected_delivery_date' as keyof Project,
-      render: (val: unknown, p: Project) => p.expected_delivery_date ? formatDate(p.expected_delivery_date) : '-'
+      render: (_val: unknown, p: Project) => p.expected_delivery_date ? formatDate(p.expected_delivery_date) : '-'
     },
     { 
       label: 'Trạng thái', 
       key: 'status' as keyof Project,
-      render: (val: unknown, p: Project) => (
+      render: (_val: unknown, p: Project) => (
         <StatusBadge 
           status={p.status} 
           labels={PROJECT_STATUS_LABELS} 
