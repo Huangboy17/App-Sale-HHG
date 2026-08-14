@@ -10,6 +10,7 @@ import { AppLayout } from './components/Layout/AppLayout';
 
 // Pages
 import LoginPage from './pages/Auth/LoginPage';
+import ResetPasswordPage from './pages/Auth/ResetPasswordPage';
 import Dashboard from './pages/Dashboard/Dashboard';
 import ProductList from './pages/Products/ProductList';
 import CustomerList from './pages/Customers/CustomerList';
@@ -62,8 +63,9 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Public route */}
+        {/* Public routes */}
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
 
         {/* Protected routes */}
         <Route

@@ -31,6 +31,8 @@ interface AuthState {
 
   login: (email: string, password?: string) => Promise<{ success: boolean; error?: string }>;
   signup: (email: string, password: string, fullName: string, role?: string) => Promise<{ success: boolean; error?: string; requiresEmailConfirm?: boolean }>;
+  resetPasswordForEmail: (email: string) => Promise<{ success: boolean; error?: string }>;
+  updatePassword: (newPassword: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   initialize: () => Promise<void>;
   clearError: () => void;
@@ -205,6 +207,73 @@ export const useAuthStore = create<AuthState>((set) => ({
         msg = 'Mật khẩu phải có ít nhất 6 ký tự';
       } else if (err.message?.includes('rate limit') || err.code === 'over_email_send_rate_limit' || err.status === 429) {
         msg = 'LỖI SUPABASE: Đã vượt quá giới hạn gửi email của Supabase (Rate limit 3 emails/giờ). Vui lòng vào Supabase Dashboard -> Authentication -> Providers -> Email -> TẮT "Confirm email" để đăng ký ngay lập tức không bị giới hạn!';
+      } else if (err.message) {
+        msg = err.message;
+      }
+
+      set({ loading: false, error: msg });
+      return { success: false, error: msg };
+    }
+  },
+
+  resetPasswordForEmail: async (email: string) => {
+    set({ loading: true, error: null });
+
+    try {
+      if (!email || !email.trim()) {
+        const msg = 'Vui lòng nhập email để đặt lại mật khẩu';
+        set({ loading: false, error: msg });
+        return { success: false, error: msg };
+      }
+
+      // Dynamic redirect URL based on current environment (localhost or Vercel production)
+      const redirectTo = `${window.location.origin}/reset-password`;
+      console.log('[Auth] Sending password reset for:', email.trim(), 'redirect to:', redirectTo);
+
+      await supaDb.supabaseResetPasswordForEmail(email.trim(), redirectTo);
+      console.log('[Auth] Password reset email request sent successfully');
+
+      set({ loading: false, error: null });
+      return { success: true };
+    } catch (err: any) {
+      console.error('[Auth] resetPasswordForEmail error:', err);
+      let msg = 'Không thể gửi email đặt lại mật khẩu';
+
+      if (err.message?.includes('rate limit') || err.status === 429 || err.code === 'over_email_send_rate_limit') {
+        msg = 'Đã vượt quá giới hạn gửi email từ Supabase (Rate limit). Vui lòng thử lại sau ít phút hoặc cấu hình Custom SMTP.';
+      } else if (err.message) {
+        msg = err.message;
+      }
+
+      set({ loading: false, error: msg });
+      return { success: false, error: msg };
+    }
+  },
+
+  updatePassword: async (newPassword: string) => {
+    set({ loading: true, error: null });
+
+    try {
+      if (!newPassword || newPassword.length < 6) {
+        const msg = 'Mật khẩu mới phải có ít nhất 6 ký tự';
+        set({ loading: false, error: msg });
+        return { success: false, error: msg };
+      }
+
+      console.log('[Auth] Updating password via Supabase Auth...');
+      await supaDb.supabaseUpdatePassword(newPassword);
+      console.log('[Auth] Password updated successfully');
+
+      set({ loading: false, error: null });
+      return { success: true };
+    } catch (err: any) {
+      console.error('[Auth] updatePassword error:', err);
+      let msg = 'Đổi mật khẩu thất bại';
+
+      if (err.message?.includes('Password should be at least') || err.code === 'weak_password') {
+        msg = 'Mật khẩu mới phải có ít nhất 6 ký tự';
+      } else if (err.message?.includes('Auth session missing') || err.message?.includes('jwt') || err.status === 401) {
+        msg = 'Phiên khôi phục mật khẩu đã hết hạn hoặc không hợp lệ. Vui lòng yêu cầu lại liên kết mới.';
       } else if (err.message) {
         msg = err.message;
       }
