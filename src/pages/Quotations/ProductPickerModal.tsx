@@ -49,12 +49,6 @@ export default function ProductPickerModal({
     });
   }, [products, searchQuery, showOutOfStock, excludeProductIds]);
 
-  const getStockColor = (stock: number) => {
-    if (stock <= 0) return 'var(--danger)';
-    if (stock < 10) return 'var(--warning)';
-    return 'inherit';
-  };
-
   const thStyle: React.CSSProperties = {
     padding: '0.75rem 1rem',
     borderBottom: '2px solid var(--border-color)',
@@ -116,40 +110,48 @@ export default function ProductPickerModal({
                 <th style={{ ...thStyle, textAlign: 'right' }}>Giá NY sau VAT</th>
                 <th style={{ ...thStyle, textAlign: 'right' }}>Giá DP</th>
                 <th style={{ ...thStyle, textAlign: 'right' }}>Tồn kho</th>
+                <th style={{ ...thStyle, textAlign: 'center' }}>Tình trạng</th>
               </tr>
             </thead>
             <tbody>
               {filteredProducts.length > 0 ? (
-                filteredProducts.map((p) => (
-                  <tr
-                    key={p.id}
-                    onClick={() => { onSelect(p); onClose(); }}
-                    style={{
-                      cursor: 'pointer',
-                      transition: 'background 0.15s ease',
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-surface)'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
-                  >
-                    <td style={{ ...tdStyle, fontWeight: 600, color: 'var(--primary)' }}>{p.product_code}</td>
-                    <td style={tdStyle}>{p.product_name}</td>
-                    <td style={tdStyle}>{p.brand || '-'}</td>
-                    <td style={tdStyle}>{p.unit}</td>
-                    <td style={{ ...tdStyle, textAlign: 'right' }}>{formatVND(p.base_price)}</td>
-                    <td style={{ ...tdStyle, textAlign: 'right' }}>{formatVND(p.dp_price)}</td>
-                    <td style={{
-                      ...tdStyle,
-                      textAlign: 'right',
-                      color: getStockColor(p.stock_quantity),
-                      fontWeight: 600,
-                    }}>
-                      {formatNumber(p.stock_quantity)}
-                    </td>
-                  </tr>
-                ))
+                filteredProducts.map((p) => {
+                  const isAvailable = p.stock_quantity > 0;
+                  return (
+                    <tr
+                      key={p.id}
+                      onClick={() => { onSelect(p); onClose(); }}
+                      style={{
+                        cursor: 'pointer',
+                        transition: 'background 0.15s ease',
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-surface)'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+                    >
+                      <td style={{ ...tdStyle, fontWeight: 600, color: 'var(--primary)' }}>{p.product_code}</td>
+                      <td style={tdStyle}>{p.product_name}</td>
+                      <td style={tdStyle}>{p.brand || '-'}</td>
+                      <td style={tdStyle}>{p.unit}</td>
+                      <td style={{ ...tdStyle, textAlign: 'right' }}>{formatVND(p.base_price)}</td>
+                      <td style={{ ...tdStyle, textAlign: 'right' }}>{formatVND(p.dp_price)}</td>
+                      <td style={{
+                        ...tdStyle,
+                        textAlign: 'right',
+                        fontWeight: 600,
+                      }}>
+                        {formatNumber(p.stock_quantity)}
+                      </td>
+                      <td style={{ ...tdStyle, textAlign: 'center' }}>
+                        <span className={`badge ${isAvailable ? 'badge-success' : 'badge-danger'}`}>
+                          {isAvailable ? 'Còn hàng' : 'Hết hàng'}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })
               ) : (
                 <tr>
-                  <td colSpan={7} style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                  <td colSpan={8} style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
                     Không tìm thấy sản phẩm nào
                   </td>
                 </tr>

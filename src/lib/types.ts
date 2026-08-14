@@ -335,6 +335,16 @@ export type SaleQuotationStatus =
   | 'LOST'
   | 'EXPIRED';
 
+export interface QuotationTerm {
+  id: string;
+  quotation_id?: string;
+  term_number?: number;
+  term_title: string;
+  term_content: string;
+  display_order: number;
+  is_visible: boolean;
+}
+
 export interface SaleQuotation extends BaseEntity {
   quotation_code: string;
   customer_id: string;
@@ -342,6 +352,7 @@ export interface SaleQuotation extends BaseEntity {
   status: SaleQuotationStatus;
   total_amount: number;
   note?: string;
+  terms?: QuotationTerm[];
   created_by?: string;
 }
 
@@ -360,6 +371,42 @@ export interface SaleQuotationItem {
   // Sale input
   quantity: number;
   sale_price: number;
+  note?: string;        // Ghi chú từng dòng sản phẩm
   // Computed
   amount: number;       // quantity × sale_price
 }
+
+// --- Sale Quotation Dispatch (Hold & Order after WON) ---
+export type HoldStatus = 'PENDING' | 'HELD';
+export type OrderStatus = 'PENDING' | 'REQUESTED' | 'ORDERED' | 'RECEIVED';
+
+export interface QuotationDispatchItem {
+  id: string;
+  quotation_id: string;
+  product_id: string;
+  product_code: string;
+  product_name: string;
+  brand: string;
+  unit: string;
+  ordered_quantity: number;        // SL khách đặt
+  stock_snapshot: number;          // Tồn kho tại thời điểm chốt
+  hold_quantity: number;           // SL giữ hàng (có sẵn)
+  needed_quantity: number;         // SL cần đặt thêm
+  status_hold?: HoldStatus;        // Trạng thái giữ hàng
+  status_order?: OrderStatus;      // Trạng thái đặt hàng
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface QuotationDispatchSummary {
+  quotation_id: string;
+  closed_at: string;               // Ngày chốt
+  total_products: number;          // Tổng số mặt hàng
+  sufficient_products: number;     // Số mặt hàng đủ hàng
+  insufficient_products: number;   // Số mặt hàng thiếu hàng
+  total_hold_qty: number;          // Tổng SL giữ hàng
+  total_order_qty: number;         // Tổng SL cần đặt
+  items: QuotationDispatchItem[];
+}
+

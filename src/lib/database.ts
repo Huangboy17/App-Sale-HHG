@@ -3,7 +3,8 @@ import type {
   Product, Customer, Transaction, Quotation, QuotationVersion, 
   QuotationItem, Contract, ContractItem, Payment, Activity, 
   User, AuditLog, Opportunity, Project,
-  SaleQuotation, SaleQuotationItem
+  SaleQuotation, SaleQuotationItem,
+  QuotationDispatchItem, QuotationDispatchSummary
 } from './types';
 
 export const KEYS = {
@@ -21,6 +22,7 @@ export const KEYS = {
   AUDIT_LOGS: 'smapp_audit_logs',
   SALE_QUOTATIONS: 'smapp_sale_quotations',
   SALE_QUOTATION_ITEMS: 'smapp_sale_quotation_items',
+  SALE_QUOTATION_DISPATCH: 'smapp_sale_quotation_dispatch',
 };
 
 class Database {
@@ -278,6 +280,82 @@ class Database {
     const nextNum = existing.length + 1;
     return prefix + nextNum.toString().padStart(3, '0');
   }
+
+  // --- Sale Quotation Dispatch Methods ---
+  public getSaleQuotationDispatch(quotationId: string): QuotationDispatchSummary | null {
+    const list = this.findAll<QuotationDispatchSummary>(KEYS.SALE_QUOTATION_DISPATCH);
+    return list.find(d => d.quotation_id === quotationId) || null;
+  }
+
+  public saveSaleQuotationDispatch(summary: QuotationDispatchSummary): void {
+    const list = this.findAll<QuotationDispatchSummary>(KEYS.SALE_QUOTATION_DISPATCH)
+      .filter(d => d.quotation_id !== summary.quotation_id);
+    this.set(KEYS.SALE_QUOTATION_DISPATCH, [...list, summary]);
+  }
+
+  public createOrUpdateQuotationDispatch(quotationId: string, forceRecreate = false): QuotationDispatchSummary | null {
+    const existing = this.getSaleQuotationDispatch(quotationId);
+    if (existing && !forceRecreate) {
+      return existing;
+    }
+
+    const items = this.getSaleQuotationItems(quotationId);
+    if (items.length === 0) return null;
+
+    const allProducts = this.getProducts();
+    const now = new Date().toISOString();
+
+    const dispatchItems: QuotationDispatchItem[] = items.map(item => {
+      // Find matching product for current stock
+      const product = allProducts.find(p => p.id === item.product_id || p.product_code === item.product_code);
+      const stock = product ? (product.stock_quantity ?? 0) : 0;
+      const ordered = item.quantity;
+      const holdQty = stock >= ordered ? ordered : Math.max(0, stock);
+      const neededQty = stock < ordered ? ordered - Math.max(0, stock) : 0;
+
+      // Preserve existing item status if available
+      const existingItem = existing?.items.find(ei => ei.product_id === item.product_id || ei.product_code === item.product_code);
+
+      return {
+        id: existingItem?.id || uuidv4(),
+        quotation_id: quotationId,
+        product_id: item.product_id,
+        product_code: item.product_code,
+        product_name: item.product_name,
+        brand: item.brand,
+        unit: item.unit,
+        ordered_quantity: ordered,
+        stock_snapshot: stock,
+        hold_quantity: holdQty,
+        needed_quantity: neededQty,
+        status_hold: existingItem?.status_hold || (holdQty > 0 ? 'PENDING' : undefined),
+        status_order: existingItem?.status_order || (neededQty > 0 ? 'PENDING' : undefined),
+        notes: existingItem?.notes || '',
+        created_at: existingItem?.created_at || now,
+        updated_at: now,
+      };
+    });
+
+    const totalHold = dispatchItems.reduce((sum, i) => sum + i.hold_quantity, 0);
+    const totalOrder = dispatchItems.reduce((sum, i) => sum + i.needed_quantity, 0);
+    const sufficientCount = dispatchItems.filter(i => i.stock_snapshot >= i.ordered_quantity).length;
+    const insufficientCount = dispatchItems.filter(i => i.stock_snapshot < i.ordered_quantity).length;
+
+    const summary: QuotationDispatchSummary = {
+      quotation_id: quotationId,
+      closed_at: existing?.closed_at || now,
+      total_products: dispatchItems.length,
+      sufficient_products: sufficientCount,
+      insufficient_products: insufficientCount,
+      total_hold_qty: totalHold,
+      total_order_qty: totalOrder,
+      items: dispatchItems,
+    };
+
+    this.saveSaleQuotationDispatch(summary);
+    return summary;
+  }
+
 
   public seedDemoData(): void {
     console.log('Seeding CRM data for Transaction-Centric Model...');

@@ -1,9 +1,10 @@
-import { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Modal } from '../../components/common/Modal';
-import { Plus, Trash2, AlertTriangle } from 'lucide-react';
-import type { Customer, Product } from '../../lib/types';
+import { Plus, Trash2, AlertTriangle, FileCheck, RotateCcw } from 'lucide-react';
+import type { Customer, Product, QuotationTerm } from '../../lib/types';
 import { useSaleQuotationStore } from '../../stores/saleQuotationStore';
 import { formatVND } from '../../lib/formatters';
+import { DEFAULT_QUOTATION_TERMS } from '../../lib/quotationExport';
 import ProductPickerModal from './ProductPickerModal';
 
 interface QuotationFormModalProps {
@@ -19,6 +20,7 @@ interface QuotationLineItem {
   product: Product;
   quantity: number;
   sale_price: number;
+  note?: string;
   // UI-only state (not saved to DB)
   priceMode: PriceMode;
   discountPercent: number;
@@ -158,6 +160,9 @@ export default function QuotationFormModal({
 }: QuotationFormModalProps) {
   const [items, setItems] = useState<QuotationLineItem[]>([]);
   const [note, setNote] = useState('');
+  const [terms, setTerms] = useState<QuotationTerm[]>(
+    DEFAULT_QUOTATION_TERMS.map((t) => ({ ...t }))
+  );
   const [isProductPickerOpen, setIsProductPickerOpen] = useState(false);
 
   const createQuotation = useSaleQuotationStore((state) => state.createQuotation);
@@ -175,6 +180,7 @@ export default function QuotationFormModal({
           product,
           quantity: 1,
           sale_price: product.base_price,
+          note: '',
           priceMode: 'price',
           discountPercent: 0,
         },
@@ -199,6 +205,13 @@ export default function QuotationFormModal({
   const handleUpdatePrice = (index: number, value: number) => {
     const newItems = [...items];
     newItems[index] = { ...newItems[index], sale_price: value };
+    setItems(newItems);
+  };
+
+  /* ── Update item note ── */
+  const handleUpdateItemNote = (index: number, val: string) => {
+    const newItems = [...items];
+    newItems[index] = { ...newItems[index], note: val };
     setItems(newItems);
   };
 
@@ -233,6 +246,46 @@ export default function QuotationFormModal({
     setItems(newItems);
   };
 
+  /* ── Term handlers ── */
+  const handleToggleTerm = (index: number) => {
+    const newTerms = [...terms];
+    newTerms[index].is_visible = !newTerms[index].is_visible;
+    setTerms(newTerms);
+  };
+
+  const handleUpdateTermTitle = (index: number, title: string) => {
+    const newTerms = [...terms];
+    newTerms[index].term_title = title;
+    setTerms(newTerms);
+  };
+
+  const handleUpdateTermContent = (index: number, content: string) => {
+    const newTerms = [...terms];
+    newTerms[index].term_content = content;
+    setTerms(newTerms);
+  };
+
+  const handleAddTerm = () => {
+    const newTerm: QuotationTerm = {
+      id: `term-${Date.now()}`,
+      term_title: `Điều khoản ${terms.length + 1}`,
+      term_content: '',
+      display_order: terms.length + 1,
+      is_visible: true,
+    };
+    setTerms([...terms, newTerm]);
+  };
+
+  const handleRemoveTerm = (index: number) => {
+    const newTerms = [...terms];
+    newTerms.splice(index, 1);
+    setTerms(newTerms);
+  };
+
+  const handleResetTerms = () => {
+    setTerms(DEFAULT_QUOTATION_TERMS.map((t) => ({ ...t })));
+  };
+
   const totalAmount = useMemo(() => {
     return items.reduce((sum, item) => sum + item.quantity * item.sale_price, 0);
   }, [items]);
@@ -252,12 +305,13 @@ export default function QuotationFormModal({
     }
 
     try {
-      // Pass items to store – priceMode/discountPercent are stripped by the store
-      await createQuotation(customer.id, items, note);
+      // Pass items and terms to store
+      await createQuotation(customer.id, items, note, terms);
       onSaved();
       onClose();
       setItems([]);
       setNote('');
+      setTerms(DEFAULT_QUOTATION_TERMS.map((t) => ({ ...t })));
     } catch (error) {
       console.error('Error saving quotation:', error);
       alert('Có lỗi xảy ra khi lưu báo giá');
@@ -271,7 +325,7 @@ export default function QuotationFormModal({
       <Modal
         isOpen={isOpen}
         onClose={onClose}
-        title="Tạo báo giá mới"
+        title="Tạo báo giá / Xác nhận đơn hàng mới"
         size="xl"
         footer={
           <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
@@ -289,7 +343,7 @@ export default function QuotationFormModal({
           {/* Header info */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', padding: '16px', backgroundColor: 'var(--bg-surface-light)', borderRadius: 'var(--radius-md)' }}>
             <div>
-              <div className="text-muted" style={{ fontSize: '0.875rem', marginBottom: '4px' }}>Mã BG</div>
+              <div className="text-muted" style={{ fontSize: '0.875rem', marginBottom: '4px' }}>Mã BG / ĐH</div>
               <div style={{ fontWeight: 500 }}>Tự động</div>
             </div>
             <div>
@@ -297,7 +351,7 @@ export default function QuotationFormModal({
               <div style={{ fontWeight: 500 }}>{customer.customer_name}</div>
             </div>
             <div>
-              <div className="text-muted" style={{ fontSize: '0.875rem', marginBottom: '4px' }}>Ngày</div>
+              <div className="text-muted" style={{ fontSize: '0.875rem', marginBottom: '4px' }}>Ngày lập</div>
               <div style={{ fontWeight: 500 }}>{todayStr}</div>
             </div>
             <div>
@@ -321,31 +375,33 @@ export default function QuotationFormModal({
             </div>
 
             <div style={{ overflowX: 'auto', backgroundColor: 'var(--bg-surface-light)', borderRadius: 'var(--radius-md)' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '950px' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '1050px' }}>
                 <thead>
                   <tr>
                     <th style={{ ...thBase, width: '36px' }}>STT</th>
                     <th style={thBase}>Mã SP</th>
-                    <th style={thBase}>Tên SP</th>
+                    <th style={thBase}>Tên sản phẩm</th>
+                    <th style={thBase}>Hãng</th>
                     <th style={thBase}>ĐVT</th>
                     <th style={{ ...thInput, width: '88px' }}>✏️ SL</th>
                     <th style={thRef}>Giá NY sau VAT</th>
                     <th style={thRef}>Giá DP</th>
-                    <th style={{ ...thInput, width: '200px' }}>✏️ Giá bán</th>
+                    <th style={{ ...thInput, width: '190px' }}>✏️ Giá bán</th>
                     <th style={{ ...thBase, textAlign: 'right' }}>Thành tiền</th>
+                    <th style={{ ...thBase, width: '160px' }}>Ghi chú</th>
                     <th style={{ ...thBase, width: '36px', textAlign: 'center' }}></th>
                   </tr>
                 </thead>
                 <tbody>
                   {items.length === 0 ? (
                     <tr>
-                      <td colSpan={10} style={{ padding: '32px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                      <td colSpan={12} style={{ padding: '32px', textAlign: 'center', color: 'var(--text-muted)' }}>
                         Chưa có sản phẩm nào. Bấm [+ Thêm sản phẩm] để bắt đầu.
                       </td>
                     </tr>
                   ) : (
                     items.map((item, index) => {
-                      const { product, quantity, sale_price, priceMode, discountPercent } = item;
+                      const { product, quantity, sale_price, priceMode, discountPercent, note: itemNote } = item;
                       const isWarning = sale_price < product.dp_price && sale_price > 0;
 
                       return (
@@ -359,10 +415,14 @@ export default function QuotationFormModal({
                           {/* Mã SP */}
                           <td style={{ ...tdBase, fontWeight: 500, color: 'var(--primary)' }}>{product.product_code}</td>
 
-                          {/* Tên SP + Hãng */}
+                          {/* Tên SP */}
                           <td style={tdBase}>
-                            <div>{product.product_name}</div>
-                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>{product.brand}</div>
+                            <div style={{ fontWeight: 500 }}>{product.product_name}</div>
+                          </td>
+
+                          {/* Hãng */}
+                          <td style={{ ...tdBase, color: 'var(--text-muted)', fontWeight: 500 }}>
+                            {product.brand || ''}
                           </td>
 
                           {/* ĐVT */}
@@ -482,6 +542,18 @@ export default function QuotationFormModal({
                             {formatVND(quantity * sale_price)}
                           </td>
 
+                          {/* Ghi chú */}
+                          <td style={tdBase}>
+                            <input
+                              type="text"
+                              className="form-input"
+                              style={{ width: '100%', minWidth: '130px', padding: '6px 8px', fontSize: '0.85rem' }}
+                              placeholder="Quy cách, màu..."
+                              value={itemNote || ''}
+                              onChange={(e) => handleUpdateItemNote(index, e.target.value)}
+                            />
+                          </td>
+
                           {/* Xóa */}
                           <td style={{ ...tdBase, textAlign: 'center' }}>
                             <button
@@ -502,13 +574,104 @@ export default function QuotationFormModal({
             </div>
           </div>
 
-          {/* Ghi chú */}
+          {/* ============================================================ */}
+          {/* CÁC ĐIỀU KHOẢN KÈM THEO                                       */}
+          {/* ============================================================ */}
+          <div style={{ border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '16px', backgroundColor: 'var(--bg-surface-light)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+              <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <FileCheck size={18} />
+                CÁC ĐIỀU KHOẢN KÈM THEO
+              </h4>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  type="button"
+                  className="btn btn-outline text-sm"
+                  onClick={handleResetTerms}
+                  style={{ padding: '4px 8px', fontSize: '0.78rem' }}
+                  title="Khôi phục các điều khoản mẫu ban đầu"
+                >
+                  <RotateCcw size={13} />
+                  Mặc định
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-outline text-sm"
+                  onClick={handleAddTerm}
+                  style={{ padding: '4px 8px', fontSize: '0.78rem' }}
+                >
+                  <Plus size={13} />
+                  Thêm điều khoản
+                </button>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {terms.map((term, index) => (
+                <div
+                  key={term.id || index}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '6px',
+                    padding: '10px 12px',
+                    background: term.is_visible ? 'var(--bg-surface)' : 'rgba(0,0,0,0.03)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '6px',
+                    opacity: term.is_visible ? 1 : 0.6,
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
+                      <input
+                        type="checkbox"
+                        checked={term.is_visible}
+                        onChange={() => handleToggleTerm(index)}
+                        title="Bật/tắt hiển thị điều khoản này"
+                      />
+                      <span style={{ fontWeight: 700, fontSize: '0.85rem' }}>{index + 1}.</span>
+                      <input
+                        type="text"
+                        className="form-input"
+                        style={{ fontWeight: 600, flex: 1, padding: '4px 8px', fontSize: '0.85rem' }}
+                        value={term.term_title}
+                        onChange={(e) => handleUpdateTermTitle(index, e.target.value)}
+                        placeholder="Tiêu đề điều khoản (VD: Đơn giá, Thanh toán...)"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      className="btn-icon text-danger"
+                      onClick={() => handleRemoveTerm(index)}
+                      title="Xóa điều khoản này"
+                      style={{ padding: '4px' }}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+
+                  {term.is_visible && (
+                    <textarea
+                      className="form-input"
+                      rows={2}
+                      style={{ fontSize: '0.85rem', width: '100%', resize: 'vertical' }}
+                      value={term.term_content}
+                      onChange={(e) => handleUpdateTermContent(index, e.target.value)}
+                      placeholder="Nội dung chi tiết của điều khoản (hỗ trợ xuống dòng)..."
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Ghi chú chung */}
           <div className="form-group">
-            <label className="form-label">Ghi chú báo giá</label>
+            <label className="form-label" style={{ fontSize: '0.875rem' }}>Ghi chú chung bổ sung (nếu có)</label>
             <textarea
               className="form-input"
-              rows={3}
-              placeholder="Nhập ghi chú cho báo giá..."
+              rows={2}
+              placeholder="Nhập ghi chú chung khác cho báo giá..."
               value={note}
               onChange={(e) => setNote(e.target.value)}
             />
@@ -525,7 +688,7 @@ export default function QuotationFormModal({
             handleAddProduct(product);
             setIsProductPickerOpen(false);
           }}
-          excludeProductIds={items.map(i => i.product.id)}
+          excludeProductIds={items.map((i) => i.product.id)}
         />
       )}
     </>

@@ -2,18 +2,15 @@ import { useEffect, useState, useMemo } from 'react';
 import { Plus, Search, FileUp, PackageOpen, Download } from 'lucide-react';
 import { useProductStore } from '../../stores/productStore';
 import type { Product } from '../../lib/types';
-import { formatVND } from '../../lib/formatters';
+import { formatVND, formatNumber } from '../../lib/formatters';
 import { DataTable } from '../../components/common/DataTable';
-import { StockIndicator } from '../../components/common/StockIndicator';
 import ProductForm from './ProductForm';
 import ImportExcelModal from './ImportExcelModal';
 import { downloadExcelTemplate } from '../../lib/excelImport';
 
-
-
 const STOCK_FILTER_OPTIONS = [
-  { value: 'all', label: 'Tất cả tồn kho' },
-  { value: 'in_stock', label: 'Còn hàng (>10)' },
+  { value: 'all', label: 'Tất cả mức tồn' },
+  { value: 'in_stock', label: 'Tồn nhiều (>10)' },
   { value: 'low_stock', label: 'Sắp hết (1-10)' },
   { value: 'out_of_stock', label: 'Hết hàng (0)' },
 ];
@@ -80,21 +77,18 @@ export default function ProductList() {
       key: 'stock_quantity' as keyof Product,
       sortable: true,
       render: (_val: unknown, p: Product) => (
-        <StockIndicator 
-          available={p.stock_quantity - (p.reserved_quantity || 0)} 
-          total={p.stock_quantity} 
-        />
+        <span style={{ fontWeight: 600 }}>{formatNumber(p.stock_quantity)}</span>
       )
     },
     { 
-      label: 'Trạng thái', 
+      label: 'Tình trạng', 
       key: 'stock_quantity' as keyof Product,
       sortable: true,
       render: (_val: unknown, p: Product) => {
         const isAvailable = p.stock_quantity > 0;
         return (
           <span className={`badge ${isAvailable ? 'badge-success' : 'badge-danger'}`}>
-            {isAvailable ? 'Có sẵn' : 'Hết hàng'}
+            {isAvailable ? 'Còn hàng' : 'Hết hàng'}
           </span>
         );
       }
@@ -196,8 +190,8 @@ export default function ProductList() {
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
         >
-          <option value="">Tất cả trạng thái</option>
-          <option value="available">Có sẵn</option>
+          <option value="">Tất cả tình trạng</option>
+          <option value="available">Còn hàng</option>
           <option value="out_of_stock">Hết hàng</option>
         </select>
         <select

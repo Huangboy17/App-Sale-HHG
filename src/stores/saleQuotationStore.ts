@@ -1,6 +1,9 @@
 import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
-import type { SaleQuotation, SaleQuotationItem, SaleQuotationStatus, Product } from '../lib/types';
+import type { 
+  SaleQuotation, SaleQuotationItem, SaleQuotationStatus, Product, 
+  QuotationDispatchSummary, QuotationDispatchItem, QuotationTerm 
+} from '../lib/types';
 import { db } from '../lib/database';
 
 interface SaleQuotationState {
@@ -13,11 +16,16 @@ interface SaleQuotationState {
       product: Product;
       quantity: number;
       sale_price: number;
+      note?: string;
     }>,
-    note?: string
+    note?: string,
+    terms?: QuotationTerm[]
   ) => SaleQuotation;
   updateQuotationStatus: (id: string, status: SaleQuotationStatus) => void;
   getQuotationItems: (quotationId: string) => SaleQuotationItem[];
+  getQuotationDispatch: (quotationId: string) => QuotationDispatchSummary | null;
+  refreshQuotationDispatch: (quotationId: string) => QuotationDispatchSummary | null;
+  updateDispatchItemStatus: (quotationId: string, itemId: string, updates: Partial<QuotationDispatchItem>) => void;
 }
 
 export const useSaleQuotationStore = create<SaleQuotationState>((set, get) => ({
@@ -35,7 +43,7 @@ export const useSaleQuotationStore = create<SaleQuotationState>((set, get) => ({
     }
   },
 
-  createQuotation: (customerId, items, note) => {
+  createQuotation: (customerId, items, note, terms) => {
     const code = db.generateSaleQuotationCode();
     const now = new Date().toISOString();
 
@@ -53,6 +61,7 @@ export const useSaleQuotationStore = create<SaleQuotationState>((set, get) => ({
       status: 'DRAFT',
       total_amount: totalAmount,
       note: note || undefined,
+      terms: terms || undefined,
     });
 
     // Create snapshot items
@@ -63,13 +72,14 @@ export const useSaleQuotationStore = create<SaleQuotationState>((set, get) => ({
       // Snapshot
       product_code: item.product.product_code,
       product_name: item.product.product_name,
-      brand: item.product.brand,
+      brand: item.product.brand || '',
       unit: item.product.unit,
       listed_price: item.product.base_price,
       dp_price: item.product.dp_price,
       // Sale input
       quantity: item.quantity,
       sale_price: item.sale_price,
+      note: item.note || undefined,
       amount: item.quantity * item.sale_price,
     }));
 
@@ -83,6 +93,12 @@ export const useSaleQuotationStore = create<SaleQuotationState>((set, get) => ({
 
   updateQuotationStatus: (id, status) => {
     db.updateSaleQuotation(id, { status });
+
+    // When status changes to WON ("Đã chốt"), automatically generate & persist stock dispatch snapshot
+    if (status === 'WON') {
+      db.createOrUpdateQuotationDispatch(id, false);
+    }
+
     // Refresh: find which customer this quotation belongs to
     const allQuotations = db.getSaleQuotations();
     const quotation = allQuotations.find((q) => q.id === id);
@@ -93,5 +109,22 @@ export const useSaleQuotationStore = create<SaleQuotationState>((set, get) => ({
 
   getQuotationItems: (quotationId: string) => {
     return db.getSaleQuotationItems(quotationId);
+  },
+
+  getQuotationDispatch: (quotationId: string) => {
+    return db.getSaleQuotationDispatch(quotationId);
+  },
+
+  refreshQuotationDispatch: (quotationId: string) => {
+    return db.createOrUpdateQuotationDispatch(quotationId, true);
+  },
+
+  updateDispatchItemStatus: (quotationId: string, itemId: string, updates: Partial<QuotationDispatchItem>) => {
+    const summary = db.getSaleQuotationDispatch(quotationId);
+    if (!summary) return;
+    summary.items = summary.items.map((item) =>
+      item.id === itemId ? { ...item, ...updates, updated_at: new Date().toISOString() } : item
+    );
+    db.saveSaleQuotationDispatch(summary);
   },
 }));

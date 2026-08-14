@@ -330,3 +330,29 @@ export const SALE_QUOTATION_STATUS_COLORS: Record<string, string> = {
   LOST: 'danger',
   EXPIRED: 'default',
 };
+
+// --- Quotation Dispatch Status ---
+export const HOLD_STATUS_LABELS: Record<string, string> = {
+  PENDING: 'Chưa xử lý',
+  HELD: 'Đã giữ hàng',
+};
+
+export const HOLD_STATUS_COLORS: Record<string, string> = {
+  PENDING: 'warning',
+  HELD: 'success',
+};
+
+export const DISPATCH_ORDER_STATUS_LABELS: Record<string, string> = {
+  PENDING: 'Chưa đặt',
+  REQUESTED: 'Đã gửi yêu cầu',
+  ORDERED: 'Đã đặt hàng',
+  RECEIVED: 'Đã nhập đủ hàng',
+};
+
+export const DISPATCH_ORDER_STATUS_COLORS: Record<string, string> = {
+  PENDING: 'warning',
+  REQUESTED: 'info',
+  ORDERED: 'primary',
+  RECEIVED: 'success',
+};
+
