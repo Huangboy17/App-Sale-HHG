@@ -42,6 +42,8 @@ export interface Product extends BaseEntity {
 }
 
 // --- Customer ---
+export type CustomerStatus = 'TRACKING' | 'WON' | 'LOST';
+
 export interface Customer extends BaseEntity {
   customer_name: string;
   company_name?: string;
@@ -54,59 +56,33 @@ export interface Customer extends BaseEntity {
   tax_code?: string;
   notes?: string;
   is_active: boolean;
+  status: CustomerStatus;
 }
 
-// --- Project ---
-export type ProjectStatus = 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+// --- Transaction ---
+export type TransactionStatus = 'TRACKING' | 'WON' | 'LOST';
 
-export interface Project extends BaseEntity {
+export interface Transaction extends BaseEntity {
+  transaction_code: string;
+  customer_id: string;
   project_name: string;
-  customer_id: string;
-  location?: string;
-  investor?: string;
-  contact_person?: string;
-  project_progress?: string;
-  expected_delivery_date?: string;
-  notes?: string;
-  status: ProjectStatus;
-}
-
-// --- Opportunity ---
-export type OpportunityStatus =
-  | 'LEAD'
-  | 'CONSULTING'
-  | 'QUOTING'
-  | 'SENT'
-  | 'NEGOTIATING'
-  | 'WON'
-  | 'LOST';
-
-export type Priority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
-
-export interface Opportunity extends BaseEntity {
-  opportunity_code: string;
-  customer_id: string;
-  project_id?: string;
   assigned_sale_id: string;
-  received_date: string;
-  expected_close_date?: string;
-  requirements?: string;
-  estimated_value?: number;
-  priority: Priority;
-  status: OpportunityStatus;
-  rejection_reason_id?: string;
-  rejection_notes?: string;
-  rejection_date?: string;
-  last_quotation_value?: number;
+  expected_value: number;
+  status: TransactionStatus;
+  rejection_reason?: string;
+  next_action?: string;
+  next_action_date?: string;
   notes?: string;
 }
 
-// --- Rejection Reason ---
-export interface RejectionReason {
-  id: string;
-  reason_name: string;
-  sort_order: number;
-  is_active: boolean;
+// --- Activity Timeline ---
+export type ActivityType = 'NOTE' | 'CALL' | 'MEETING' | 'EMAIL' | 'QUOTATION' | 'CONTRACT' | 'PAYMENT' | 'SYSTEM';
+
+export interface Activity extends BaseEntity {
+  transaction_id: string;
+  activity_type: ActivityType;
+  description: string;
+  created_by: string;
 }
 
 // --- Quotation ---
@@ -114,7 +90,7 @@ export type QuotationVersionStatus = 'DRAFT' | 'CURRENT' | 'REPLACED' | 'CANCELL
 
 export interface Quotation extends BaseEntity {
   quotation_code: string;
-  opportunity_id: string;
+  transaction_id: string;
   created_by: string;
   notes?: string;
 }
@@ -156,37 +132,63 @@ export interface QuotationItem {
   line_subtotal: number;
   line_vat: number;
   line_total: number;
-  // Stock info at quote time
-  stock_at_quote?: number;
-  available_at_quote?: number;
   // Flags
-  discount_exceeded: boolean;
-  stock_warning?: 'AVAILABLE' | 'LOW' | 'OUT_OF_STOCK';
   notes?: string;
   created_at: string;
 }
 
+// --- Contract ---
+export type ContractStatus = 'DRAFT' | 'SIGNED' | 'EXPIRED' | 'CANCELLED';
+
+export interface Contract extends BaseEntity {
+  contract_code: string;
+  transaction_id: string;
+  quotation_version_id: string;
+  customer_id: string;
+  sign_date?: string;
+  effective_date?: string;
+  expiry_date?: string;
+  contract_value: number;
+  file_url?: string;
+  status: ContractStatus;
+  notes?: string;
+}
+
+export interface ContractItem {
+  id: string;
+  contract_id: string;
+  product_id: string;
+  line_number: number;
+  // Snapshot
+  product_code: string;
+  product_name: string;
+  brand: string;
+  unit: string;
+  base_price: number;
+  max_discount_rate: number;
+  dp_price: number;
+  vat_rate: number;
+  // Sale input
+  quantity: number;
+  discount_rate: number;
+  // Computed
+  unit_price: number;
+  line_subtotal: number;
+  line_vat: number;
+  line_total: number;
+  created_at: string;
+}
+
 // --- Order ---
-export type StockStatus = 'PENDING' | 'PARTIALLY_RESERVED' | 'FULLY_RESERVED';
-export type ContractStatus = 'PENDING' | 'SIGNED' | 'EXPIRED';
-export type PaymentStatus = 'PENDING' | 'PARTIAL' | 'PAID' | 'OVERDUE';
-export type DeliveryStatus = 'PENDING' | 'PREPARING' | 'PARTIAL' | 'DELIVERED';
 export type OrderOverallStatus = 'CONFIRMED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
 
 export interface Order extends BaseEntity {
   order_code: string;
-  opportunity_id: string;
+  contract_id?: string;
+  transaction_id: string;
   customer_id: string;
-  project_id?: string;
-  quotation_id: string;
-  quotation_version_id: string;
-  assigned_sale_id: string;
   order_date: string;
   total_amount: number;
-  stock_status: StockStatus;
-  contract_status: ContractStatus;
-  payment_status: PaymentStatus;
-  delivery_status: DeliveryStatus;
   overall_status: OrderOverallStatus;
   notes?: string;
 }
@@ -195,7 +197,7 @@ export interface OrderItem {
   id: string;
   order_id: string;
   product_id: string;
-  quotation_item_id?: string;
+  contract_item_id?: string;
   line_number: number;
   product_code: string;
   product_name: string;
@@ -208,116 +210,28 @@ export interface OrderItem {
   line_subtotal: number;
   line_vat: number;
   line_total: number;
-  reserved_quantity: number;
-  need_to_order: number;
   delivered_quantity: number;
   remaining_quantity: number;
   created_at: string;
 }
 
-// --- Contract ---
-export type ContractDocStatus = 'DRAFT' | 'SIGNED' | 'EXPIRED' | 'CANCELLED';
-
-export interface Contract extends BaseEntity {
-  contract_code: string;
-  order_id: string;
-  sign_date?: string;
-  effective_date?: string;
-  expiry_date?: string;
-  contract_value: number;
-  file_url?: string;
-  status: ContractDocStatus;
-  notes?: string;
-}
-
 // --- Payment ---
-export type PaymentScheduleStatus = 'UPCOMING' | 'DUE_SOON' | 'OVERDUE' | 'PAID';
+export type PaymentStatus = 'PENDING' | 'PARTIAL' | 'PAID' | 'OVERDUE';
 
-export interface PaymentSchedule {
-  id: string;
-  order_id: string;
-  installment_number: number;
-  payment_condition?: string;
-  percentage: number;
-  expected_date: string;
-  expected_amount: number;
-  actual_date?: string;
-  actual_amount: number;
-  status: PaymentScheduleStatus;
-  notes?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface Payment {
-  id: string;
-  payment_schedule_id: string;
+export interface Payment extends BaseEntity {
+  contract_id: string;
   payment_date: string;
   amount: number;
   payment_method?: string;
   reference_number?: string;
   notes?: string;
   created_by?: string;
-  created_at: string;
-}
-
-// --- Delivery ---
-export type DeliveryItemStatus = 'PENDING' | 'PREPARING' | 'PARTIAL' | 'DELIVERED';
-
-export interface DeliveryItem {
-  id: string;
-  order_id: string;
-  order_item_id: string;
-  product_id: string;
-  product_code: string;
-  quantity_ordered: number;
-  quantity_received: number;
-  quantity_delivered: number;
-  quantity_remaining: number;
-  status: DeliveryItemStatus;
-  delivery_date?: string;
-  delivery_notes?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-// --- Procurement ---
-export type ProcurementStatus =
-  | 'NOT_ORDERED'
-  | 'ORDERED'
-  | 'IN_PRODUCTION'
-  | 'SHIPPING'
-  | 'CUSTOMS'
-  | 'CLEARED'
-  | 'RECEIVED';
-
-export interface ProcurementItem {
-  id: string;
-  order_id: string;
-  order_item_id: string;
-  product_id: string;
-  product_code: string;
-  quantity_needed: number;
-  supplier?: string;
-  request_date?: string;
-  order_date?: string;
-  po_number?: string;
-  eta?: string;
-  shipping_status?: string;
-  customs_status?: string;
-  expected_arrival_date?: string;
-  actual_arrival_date?: string;
-  status: ProcurementStatus;
-  notes?: string;
-  created_at: string;
-  updated_at: string;
 }
 
 // --- Inventory Transaction ---
 export type InventoryTransactionType = 'IMPORT' | 'EXPORT' | 'RESERVE' | 'RELEASE' | 'ADJUST';
 
-export interface InventoryTransaction {
-  id: string;
+export interface InventoryTransaction extends BaseEntity {
   product_id: string;
   transaction_type: InventoryTransactionType;
   quantity: number;
@@ -325,7 +239,6 @@ export interface InventoryTransaction {
   reference_id?: string;
   notes?: string;
   created_by?: string;
-  created_at: string;
 }
 
 // --- Audit Log ---

@@ -11,9 +11,7 @@ import LoginPage from './pages/Auth/LoginPage';
 import Dashboard from './pages/Dashboard/Dashboard';
 import ProductList from './pages/Products/ProductList';
 import CustomerList from './pages/Customers/CustomerList';
-import ProjectList from './pages/Projects/ProjectList';
-import OpportunityList from './pages/Opportunities/OpportunityList';
-import OpportunityDetail from './pages/Opportunities/OpportunityDetail';
+import TransactionDetail from './pages/Transactions/TransactionDetail';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
@@ -50,9 +48,13 @@ function App() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/products" element={<ProductList />} />
           <Route path="/customers" element={<CustomerList />} />
+          <Route path="/transactions/:id" element={<TransactionDetail />} />
+          
+          {/* Removed routes temporarily commented out
           <Route path="/projects" element={<ProjectList />} />
           <Route path="/opportunities" element={<OpportunityList />} />
           <Route path="/opportunities/:id" element={<OpportunityDetail />} />
+          */}
         </Route>
 
         {/* Catch-all */}
