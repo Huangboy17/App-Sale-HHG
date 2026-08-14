@@ -447,6 +447,7 @@ export default function QuotationDetailModal({ isOpen, onClose, quotation, onSta
               <thead>
                 <tr>
                   <th style={thStyle}>STT</th>
+                  <th style={{ ...thStyle, textAlign: 'center', width: '50px' }}>Ảnh</th>
                   <th style={thStyle}>Mã SP</th>
                   <th style={thStyle}>Tên SP</th>
                   <th style={thStyle}>Hãng</th>
@@ -462,7 +463,7 @@ export default function QuotationDetailModal({ isOpen, onClose, quotation, onSta
               <tbody>
                 {items.length === 0 ? (
                   <tr>
-                    <td colSpan={11} style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                    <td colSpan={12} style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
                       Không có sản phẩm nào trong báo giá này
                     </td>
                   </tr>
@@ -477,6 +478,18 @@ export default function QuotationDetailModal({ isOpen, onClose, quotation, onSta
                         }}
                       >
                         <td style={tdStyle}>{index + 1}</td>
+                        <td style={{ ...tdStyle, textAlign: 'center', padding: '4px' }}>
+                          {item.image_url ? (
+                            <img
+                              src={item.image_url}
+                              alt=""
+                              style={{ maxWidth: '42px', maxHeight: '42px', objectFit: 'contain', borderRadius: '3px', display: 'inline-block' }}
+                              onError={(e) => {
+                                (e.target as HTMLElement).style.display = 'none';
+                              }}
+                            />
+                          ) : null}
+                        </td>
                         <td style={{ ...tdStyle, fontWeight: 600, color: 'var(--primary)' }}>{item.product_code}</td>
                         <td style={tdStyle}>{item.product_name}</td>
                         <td style={tdStyle}>{item.brand}</td>
@@ -504,35 +517,44 @@ export default function QuotationDetailModal({ isOpen, onClose, quotation, onSta
             </table>
           </div>
 
-          {/* CÁC ĐIỀU KHOẢN KÈM THEO */}
+          {/* CÁC ĐIỀU KHOẢN KÈM THEO (BỐ CỤC 2 CỘT COMPACT) */}
           {((quotation.terms && quotation.terms.length > 0) || quotation.note) && (
             <div
               style={{
-                marginTop: '1.25rem',
-                padding: '1rem 1.25rem',
+                marginTop: '1rem',
+                padding: '0.75rem 1rem',
                 backgroundColor: 'var(--bg-surface-light)',
                 borderRadius: 'var(--radius-md)',
                 border: '1px solid var(--border-color)',
               }}
             >
-              <h4 style={{ margin: '0 0 0.75rem 0', fontSize: '0.95rem', fontWeight: 700, color: 'var(--primary)' }}>
+              <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', fontWeight: 700, color: 'var(--primary)' }}>
                 CÁC ĐIỀU KHOẢN KÈM THEO
               </h4>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.85rem' }}>
-                {(quotation.terms || []).filter((t) => t.is_visible).map((term, idx) => (
-                  <div key={term.id || idx}>
-                    <strong style={{ color: 'var(--text-main)' }}>{idx + 1}. {term.term_title}:</strong>
-                    <div style={{ whiteSpace: 'pre-line', paddingLeft: '1rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                      {term.term_content}
-                    </div>
-                  </div>
-                ))}
-                {quotation.note && (
-                  <div style={{ marginTop: '4px', paddingTop: '4px', borderTop: '1px dashed var(--border-color)' }}>
-                    <strong>Ghi chú bổ sung:</strong> <span style={{ color: 'var(--text-muted)' }}>{quotation.note}</span>
-                  </div>
-                )}
-              </div>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                <tbody>
+                  {(quotation.terms || []).filter((t) => t.is_visible).map((term, idx) => (
+                    <tr key={term.id || idx} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                      <td style={{ padding: '6px 8px', width: '160px', verticalAlign: 'top', fontWeight: 600, color: 'var(--text-main)', whiteSpace: 'nowrap' }}>
+                        {idx + 1}. {term.term_title}
+                      </td>
+                      <td style={{ padding: '6px 8px', verticalAlign: 'top', color: 'var(--text-muted)', whiteSpace: 'pre-line', lineHeight: 1.4 }}>
+                        {term.term_content}
+                      </td>
+                    </tr>
+                  ))}
+                  {quotation.note && (
+                    <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
+                      <td style={{ padding: '6px 8px', width: '160px', verticalAlign: 'top', fontWeight: 600, color: 'var(--text-main)', whiteSpace: 'nowrap' }}>
+                        Ghi chú bổ sung
+                      </td>
+                      <td style={{ padding: '6px 8px', verticalAlign: 'top', color: 'var(--text-muted)', whiteSpace: 'pre-line', lineHeight: 1.4 }}>
+                        {quotation.note}
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
           )}
         </div>

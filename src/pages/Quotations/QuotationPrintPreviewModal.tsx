@@ -3,7 +3,13 @@ import { Modal } from '../../components/common/Modal';
 import { Printer, Download } from 'lucide-react';
 import type { SaleQuotation, SaleQuotationItem, Customer, User, QuotationTerm } from '../../lib/types';
 import { formatDate, formatVND, formatNumber } from '../../lib/formatters';
-import { exportQuotationExcel, COMPANY_INFO, DEFAULT_QUOTATION_TERMS } from '../../lib/quotationExport';
+import {
+  exportQuotationExcel,
+  COMPANY_INFO,
+  DEFAULT_QUOTATION_TERMS,
+  getDocumentDisplayCode,
+  getDocumentIntroText,
+} from '../../lib/quotationExport';
 
 interface QuotationPrintPreviewModalProps {
   isOpen: boolean;
@@ -33,6 +39,11 @@ export default function QuotationPrintPreviewModal({
   const phone = customer?.phone || '-';
   const contactPerson = (customer?.contact_person || customer?.customer_name || '-').toUpperCase();
 
+  const displayCode = getDocumentDisplayCode(quotation, docTitle);
+  const isOrder = docTitle !== 'BÁO GIÁ';
+  const codeLabel = isOrder ? 'Số ĐH:' : 'Số BG:';
+  const introText = getDocumentIntroText(docTitle);
+
   const saleFullName = typeof saleUser === 'object' ? saleUser?.full_name : saleUser || COMPANY_INFO.defaultSaleName;
   const salePhone = typeof saleUser === 'object' ? saleUser?.phone || COMPANY_INFO.defaultSalePhone : COMPANY_INFO.defaultSalePhone;
   const saleEmail = typeof saleUser === 'object' ? saleUser?.email || COMPANY_INFO.defaultSaleEmail : COMPANY_INFO.defaultSaleEmail;
@@ -49,18 +60,18 @@ export default function QuotationPrintPreviewModal({
         <!DOCTYPE html>
         <html>
         <head>
-          <title>${docTitle} ${quotation.quotation_code} - ${customerName}</title>
+          <title>${docTitle} ${displayCode} - ${customerName}</title>
           <style>
             @page {
               size: A4;
-              margin: 12mm 15mm;
+              margin: 8mm 12mm;
             }
             * { box-sizing: border-box; margin: 0; padding: 0; }
-            body { font-family: 'Segoe UI', Arial, sans-serif; color: #1e293b; background: #fff; font-size: 13px; line-height: 1.45; padding: 20px; }
-            table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
-            th { background: #0f766e; color: #fff; font-size: 11.5px; font-weight: 700; text-transform: uppercase; padding: 8px 6px; border: 1px solid #0f766e; }
-            td { padding: 7px 6px; border: 1px solid #cbd5e1; font-size: 12px; }
-            tr:nth-child(even) { background-color: #f8fafc; }
+            body { font-family: 'Segoe UI', Arial, sans-serif; color: #1e293b; background: #fff; font-size: 12px; line-height: 1.35; padding: 12px; }
+            table { width: 100%; border-collapse: collapse; }
+            th { background: #0f766e; color: #fff; font-size: 11px; font-weight: 700; text-transform: uppercase; padding: 6px 4px; border: 1px solid #0f766e; }
+            td { padding: 4px 4px; border: 1px solid #cbd5e1; font-size: 11.5px; }
+            tr:nth-child(even) { background-color: #fafbfc; }
             @media print {
               body { padding: 0; }
             }
@@ -132,14 +143,14 @@ export default function QuotationPrintPreviewModal({
           style={{
             background: '#ffffff',
             color: '#1e293b',
-            padding: '32px 36px',
-            borderRadius: '6px',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+            padding: '24px 30px',
+            borderRadius: '4px',
+            boxShadow: '0 2px 10px rgba(0, 0, 0, 0.12)',
             maxWidth: '860px',
             margin: '0 auto',
             fontFamily: "'Segoe UI', Arial, sans-serif",
-            fontSize: '13px',
-            lineHeight: 1.45,
+            fontSize: '12px',
+            lineHeight: 1.38,
           }}
         >
           {/* 1. Header Top: Tên chứng từ & Số ĐH + Ngày */}
@@ -148,61 +159,60 @@ export default function QuotationPrintPreviewModal({
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'flex-start',
-              borderBottom: '2.5px solid #0f766e',
-              paddingBottom: '12px',
-              marginBottom: '16px',
+              borderBottom: '2px solid #0f766e',
+              paddingBottom: '6px',
+              marginBottom: '10px',
             }}
           >
             <div>
-              <div style={{ fontSize: '24px', fontWeight: 800, color: '#0f172a', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
+              <div style={{ fontSize: '20px', fontWeight: 800, color: '#0f172a', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
                 {docTitle}
               </div>
-              <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>
+              <div style={{ fontSize: '10.5px', color: '#64748b', marginTop: '1px' }}>
                 HỆ THỐNG QUẢN LÝ BÁN HÀNG HHG
               </div>
             </div>
             <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: '13px', fontWeight: 700, color: '#0f766e' }}>
-                Số ĐH: <span style={{ color: '#0f172a' }}>{quotation.quotation_code}</span>
+              <div style={{ fontSize: '12.5px', fontWeight: 700, color: '#0f766e' }}>
+                {codeLabel} <span style={{ color: '#0f172a' }}>{displayCode}</span>
               </div>
-              <div style={{ fontSize: '12px', color: '#475569', marginTop: '2px' }}>
+              <div style={{ fontSize: '11.5px', color: '#475569', marginTop: '1px' }}>
                 Ngày: <strong style={{ color: '#0f172a' }}>{formatDate(quotation.quotation_date)}</strong>
               </div>
             </div>
           </div>
 
-          {/* 2. Khu vực 2 cột song song: Thông tin khách hàng | Thông tin công ty */}
+          {/* 2. Khu vực 2 cột song song: Thông tin khách hàng | Thông tin công ty (Clean document look) */}
           <div
             style={{
               display: 'grid',
               gridTemplateColumns: '1fr 1fr',
-              gap: '16px',
-              marginBottom: '14px',
-              background: '#f8fafc',
-              padding: '12px 16px',
-              borderRadius: '6px',
-              border: '1px solid #e2e8f0',
+              gap: '14px',
+              marginBottom: '8px',
+              background: '#ffffff',
+              padding: '6px 4px',
+              borderBottom: '1px solid #e2e8f0',
             }}
           >
             {/* Cột trái: Thông tin khách hàng */}
-            <div>
-              <h4 style={{ fontSize: '12px', color: '#0f766e', textTransform: 'uppercase', marginBottom: '6px', fontWeight: 800, borderBottom: '1px solid #cbd5e1', paddingBottom: '3px' }}>
+            <div style={{ paddingRight: '8px', borderRight: '1px solid #e2e8f0' }}>
+              <h4 style={{ fontSize: '11px', color: '#0f766e', textTransform: 'uppercase', marginBottom: '4px', fontWeight: 800, letterSpacing: '0.03em' }}>
                 THÔNG TIN KHÁCH HÀNG
               </h4>
-              <div style={{ fontSize: '12px', lineHeight: 1.55 }}>
-                <div style={{ marginBottom: '3px' }}>
+              <div style={{ fontSize: '11.5px', lineHeight: 1.4 }}>
+                <div style={{ marginBottom: '2px' }}>
                   <span style={{ color: '#64748b', fontWeight: 600 }}>KHÁCH HÀNG: </span>
                   <strong style={{ color: '#1e293b' }}>{customerName}{customerCode ? ` - ${customerCode}` : ''}</strong>
                 </div>
-                <div style={{ marginBottom: '3px' }}>
+                <div style={{ marginBottom: '2px' }}>
                   <span style={{ color: '#64748b', fontWeight: 600 }}>ĐỊA CHỈ/CÔNG TRÌNH: </span>
                   <strong style={{ color: '#1e293b' }}>{address}</strong>
                 </div>
-                <div style={{ marginBottom: '3px' }}>
+                <div style={{ marginBottom: '2px' }}>
                   <span style={{ color: '#64748b', fontWeight: 600 }}>SỐ ĐIỆN THOẠI: </span>
                   <strong style={{ color: '#1e293b' }}>{phone}</strong>
                 </div>
-                <div style={{ marginBottom: '3px' }}>
+                <div style={{ marginBottom: '2px' }}>
                   <span style={{ color: '#64748b', fontWeight: 600 }}>NGƯỜI LIÊN HỆ: </span>
                   <strong style={{ color: '#1e293b' }}>{contactPerson}</strong>
                 </div>
@@ -211,15 +221,15 @@ export default function QuotationPrintPreviewModal({
 
             {/* Cột phải: Thông tin công ty */}
             <div>
-              <h4 style={{ fontSize: '12px', color: '#0f766e', textTransform: 'uppercase', marginBottom: '6px', fontWeight: 800, borderBottom: '1px solid #cbd5e1', paddingBottom: '3px' }}>
+              <h4 style={{ fontSize: '11px', color: '#0f766e', textTransform: 'uppercase', marginBottom: '4px', fontWeight: 800, letterSpacing: '0.03em' }}>
                 THÔNG TIN CÔNG TY
               </h4>
-              <div style={{ fontSize: '12px', lineHeight: 1.55 }}>
+              <div style={{ fontSize: '11.5px', lineHeight: 1.4 }}>
                 <div style={{ fontWeight: 800, color: '#0f766e' }}>{COMPANY_INFO.name}</div>
                 <div><span style={{ color: '#64748b', fontWeight: 600 }}>ĐỊA CHỈ: </span>{COMPANY_INFO.address}</div>
                 <div><span style={{ color: '#64748b', fontWeight: 600 }}>Hotline: </span>{COMPANY_INFO.hotline} | <span style={{ color: '#64748b', fontWeight: 600 }}>WEBSITE: </span>{COMPANY_INFO.website}</div>
                 <div><span style={{ color: '#64748b', fontWeight: 600 }}>Email: </span>{COMPANY_INFO.email}</div>
-                <div style={{ marginTop: '4px', paddingTop: '4px', borderTop: '1px dashed #cbd5e1' }}>
+                <div style={{ marginTop: '2px', paddingTop: '2px', borderTop: '1px dashed #cbd5e1' }}>
                   <span style={{ color: '#64748b', fontWeight: 600 }}>PHỤ TRÁCH: </span>
                   <strong>{saleFullName}</strong> - Mobile: <strong>{salePhone}</strong>
                   <div><span style={{ color: '#64748b', fontWeight: 600 }}>Email: </span>{saleEmail}</div>
@@ -229,98 +239,121 @@ export default function QuotationPrintPreviewModal({
           </div>
 
           {/* 3. Lời dẫn trước bảng sản phẩm */}
-          <div style={{ marginBottom: '12px', fontStyle: 'italic', color: '#334155', fontSize: '12.5px', paddingLeft: '2px' }}>
-            “Thay mặt Công ty, xin hân hạnh gửi đến quý khách báo giá gồm các hạng mục như sau:”
+          <div style={{ marginTop: '8px', marginBottom: '8px', fontStyle: 'italic', color: '#334155', fontSize: '12px', paddingLeft: '2px' }}>
+            {introText}
           </div>
 
-          {/* 4. Bảng sản phẩm: STT → Mã SP → Tên sản phẩm → Hãng → ĐVT → Số lượng → Đơn giá → Thành tiền → Ghi chú */}
-          <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '16px' }}>
+          {/* 4. Bảng sản phẩm: STT | ẢNH | MÃ SP | TÊN SẢN PHẨM | HÃNG | ĐVT | SL | ĐƠN GIÁ | THÀNH TIỀN | GHI CHÚ */}
+          <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '8px' }}>
             <thead>
               <tr style={{ background: '#0f766e', color: '#ffffff' }}>
-                <th style={{ padding: '8px 6px', border: '1px solid #0f766e', width: '32px', textAlign: 'center', fontSize: '11.5px', textTransform: 'uppercase' }}>STT</th>
-                <th style={{ padding: '8px 6px', border: '1px solid #0f766e', width: '85px', textAlign: 'left', fontSize: '11.5px', textTransform: 'uppercase' }}>Mã SP</th>
-                <th style={{ padding: '8px 6px', border: '1px solid #0f766e', textAlign: 'left', fontSize: '11.5px', textTransform: 'uppercase' }}>Tên sản phẩm</th>
-                <th style={{ padding: '8px 6px', border: '1px solid #0f766e', width: '75px', textAlign: 'left', fontSize: '11.5px', textTransform: 'uppercase' }}>Hãng</th>
-                <th style={{ padding: '8px 6px', border: '1px solid #0f766e', width: '48px', textAlign: 'center', fontSize: '11.5px', textTransform: 'uppercase' }}>ĐVT</th>
-                <th style={{ padding: '8px 6px', border: '1px solid #0f766e', width: '45px', textAlign: 'right', fontSize: '11.5px', textTransform: 'uppercase' }}>SL</th>
-                <th style={{ padding: '8px 6px', border: '1px solid #0f766e', width: '95px', textAlign: 'right', fontSize: '11.5px', textTransform: 'uppercase' }}>Đơn giá</th>
-                <th style={{ padding: '8px 6px', border: '1px solid #0f766e', width: '105px', textAlign: 'right', fontSize: '11.5px', textTransform: 'uppercase' }}>Thành tiền</th>
-                <th style={{ padding: '8px 6px', border: '1px solid #0f766e', width: '110px', textAlign: 'left', fontSize: '11.5px', textTransform: 'uppercase' }}>Ghi chú</th>
+                <th style={{ padding: '6px 4px', border: '1px solid #0f766e', width: '28px', textAlign: 'center', fontSize: '11px', textTransform: 'uppercase' }}>STT</th>
+                <th style={{ padding: '6px 4px', border: '1px solid #0f766e', width: '50px', textAlign: 'center', fontSize: '11px', textTransform: 'uppercase' }}>Ảnh</th>
+                <th style={{ padding: '6px 4px', border: '1px solid #0f766e', width: '78px', textAlign: 'left', fontSize: '11px', textTransform: 'uppercase' }}>Mã SP</th>
+                <th style={{ padding: '6px 4px', border: '1px solid #0f766e', textAlign: 'left', fontSize: '11px', textTransform: 'uppercase' }}>Tên sản phẩm</th>
+                <th style={{ padding: '6px 4px', border: '1px solid #0f766e', width: '68px', textAlign: 'left', fontSize: '11px', textTransform: 'uppercase' }}>Hãng</th>
+                <th style={{ padding: '6px 4px', border: '1px solid #0f766e', width: '40px', textAlign: 'center', fontSize: '11px', textTransform: 'uppercase' }}>ĐVT</th>
+                <th style={{ padding: '6px 4px', border: '1px solid #0f766e', width: '38px', textAlign: 'right', fontSize: '11px', textTransform: 'uppercase' }}>SL</th>
+                <th style={{ padding: '6px 4px', border: '1px solid #0f766e', width: '88px', textAlign: 'right', fontSize: '11px', textTransform: 'uppercase' }}>Đơn giá</th>
+                <th style={{ padding: '6px 4px', border: '1px solid #0f766e', width: '98px', textAlign: 'right', fontSize: '11px', textTransform: 'uppercase' }}>Thành tiền</th>
+                <th style={{ padding: '6px 4px', border: '1px solid #0f766e', width: '95px', textAlign: 'left', fontSize: '11px', textTransform: 'uppercase' }}>Ghi chú</th>
               </tr>
             </thead>
             <tbody>
               {items.map((item, idx) => (
-                <tr key={item.id || idx} style={{ background: idx % 2 === 1 ? '#f8fafc' : '#ffffff' }}>
-                  <td style={{ padding: '7px 6px', border: '1px solid #cbd5e1', textAlign: 'center', fontSize: '12px' }}>{idx + 1}</td>
-                  <td style={{ padding: '7px 6px', border: '1px solid #cbd5e1', fontWeight: 600, color: '#1e3a8a', fontSize: '12px' }}>{item.product_code}</td>
-                  <td style={{ padding: '7px 6px', border: '1px solid #cbd5e1', fontSize: '12px', fontWeight: 500 }}>
+                <tr key={item.id || idx} style={{ background: idx % 2 === 1 ? '#fafbfc' : '#ffffff' }}>
+                  <td style={{ padding: '4px 4px', border: '1px solid #cbd5e1', textAlign: 'center', fontSize: '11.5px', verticalAlign: 'middle' }}>{idx + 1}</td>
+                  <td style={{ padding: '2px 4px', border: '1px solid #cbd5e1', textAlign: 'center', verticalAlign: 'middle' }}>
+                    {item.image_url ? (
+                      <img
+                        src={item.image_url}
+                        alt=""
+                        style={{ maxWidth: '46px', maxHeight: '46px', objectFit: 'contain', borderRadius: '2px', display: 'inline-block', verticalAlign: 'middle' }}
+                        onError={(e) => {
+                          (e.target as HTMLElement).style.display = 'none';
+                        }}
+                      />
+                    ) : null}
+                  </td>
+                  <td style={{ padding: '4px 4px', border: '1px solid #cbd5e1', fontWeight: 600, color: '#1e3a8a', fontSize: '11.5px', verticalAlign: 'middle' }}>{item.product_code}</td>
+                  <td style={{ padding: '4px 4px', border: '1px solid #cbd5e1', fontSize: '11.5px', fontWeight: 500, verticalAlign: 'middle' }}>
                     {item.product_name}
                   </td>
-                  <td style={{ padding: '7px 6px', border: '1px solid #cbd5e1', fontSize: '12px', color: '#334155', fontWeight: 500 }}>
+                  <td style={{ padding: '4px 4px', border: '1px solid #cbd5e1', fontSize: '11.5px', color: '#334155', fontWeight: 500, verticalAlign: 'middle' }}>
                     {item.brand || ''}
                   </td>
-                  <td style={{ padding: '7px 6px', border: '1px solid #cbd5e1', textAlign: 'center', fontSize: '12px' }}>{item.unit}</td>
-                  <td style={{ padding: '7px 6px', border: '1px solid #cbd5e1', textAlign: 'right', fontWeight: 600, fontSize: '12px' }}>{formatNumber(item.quantity)}</td>
-                  <td style={{ padding: '7px 6px', border: '1px solid #cbd5e1', textAlign: 'right', fontWeight: 600, fontSize: '12px' }}>{formatVND(item.sale_price)}</td>
-                  <td style={{ padding: '7px 6px', border: '1px solid #cbd5e1', textAlign: 'right', fontWeight: 700, color: '#0f766e', fontSize: '12px' }}>{formatVND(item.amount)}</td>
-                  <td style={{ padding: '7px 6px', border: '1px solid #cbd5e1', fontSize: '11.5px', color: '#64748b' }}>{item.note || ''}</td>
+                  <td style={{ padding: '4px 4px', border: '1px solid #cbd5e1', textAlign: 'center', fontSize: '11.5px', verticalAlign: 'middle' }}>{item.unit}</td>
+                  <td style={{ padding: '4px 4px', border: '1px solid #cbd5e1', textAlign: 'right', fontWeight: 600, fontSize: '11.5px', verticalAlign: 'middle' }}>{formatNumber(item.quantity)}</td>
+                  <td style={{ padding: '4px 4px', border: '1px solid #cbd5e1', textAlign: 'right', fontWeight: 600, fontSize: '11.5px', verticalAlign: 'middle' }}>{formatVND(item.sale_price)}</td>
+                  <td style={{ padding: '4px 4px', border: '1px solid #cbd5e1', textAlign: 'right', fontWeight: 700, color: '#0f766e', fontSize: '11.5px', verticalAlign: 'middle' }}>{formatVND(item.amount)}</td>
+                  <td style={{ padding: '4px 4px', border: '1px solid #cbd5e1', fontSize: '11px', color: '#64748b', verticalAlign: 'middle' }}>{item.note || ''}</td>
                 </tr>
               ))}
             </tbody>
           </table>
 
           {/* 5. Total box */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '18px' }}>
-            <div style={{ width: '340px', background: '#f0fdf4', border: '1.5px solid #10b981', borderRadius: '6px', padding: '10px 14px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', fontWeight: 700, color: '#065f46' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '4px', marginBottom: '8px' }}>
+            <div style={{ width: '320px', background: '#f0fdf4', border: '1px solid #10b981', borderRadius: '3px', padding: '5px 10px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', fontWeight: 700, color: '#065f46' }}>
                 <span>TỔNG CỘNG THANH TOÁN:</span>
                 <span>{formatVND(quotation.total_amount)}</span>
               </div>
-              <div style={{ fontSize: '11px', color: '#065f46', marginTop: '4px', textAlign: 'right' }}>
+              <div style={{ fontSize: '10px', color: '#065f46', marginTop: '1px', textAlign: 'right' }}>
                 (Giá đã bao gồm thuế GTGT)
               </div>
             </div>
           </div>
 
-          {/* 6. CÁC ĐIỀU KHOẢN KÈM THEO */}
+          {/* 6. CÁC ĐIỀU KHOẢN KÈM THEO (BỐ CỤC 2 CỘT COMPACT) */}
           <div
             style={{
-              marginBottom: '20px',
-              padding: '12px 14px',
-              background: '#f8fafc',
+              marginTop: '6px',
+              marginBottom: '8px',
+              padding: '5px 8px',
+              background: '#ffffff',
               border: '1px solid #e2e8f0',
-              borderLeft: '3.5px solid #0f766e',
-              borderRadius: '4px',
-              fontSize: '12px',
-              lineHeight: 1.5,
+              borderLeft: '3px solid #0f766e',
+              borderRadius: '3px',
             }}
           >
             <div
               style={{
-                fontSize: '12.5px',
+                fontSize: '11px',
                 fontWeight: 800,
                 color: '#0f766e',
                 textTransform: 'uppercase',
-                marginBottom: '10px',
+                marginBottom: '3px',
+                paddingBottom: '2px',
                 borderBottom: '1px solid #e2e8f0',
-                paddingBottom: '4px',
               }}
             >
               CÁC ĐIỀU KHOẢN KÈM THEO
             </div>
-            {visibleTerms.map((term, idx) => (
-              <div key={term.id || idx} style={{ marginBottom: '8px' }}>
-                <strong style={{ color: '#0f172a' }}>{idx + 1}. {term.term_title}:</strong>
-                <div style={{ whiteSpace: 'pre-line', marginTop: '2px', paddingLeft: '12px', color: '#334155' }}>
-                  {term.term_content}
-                </div>
-              </div>
-            ))}
-            {quotation.note && (
-              <div style={{ marginTop: '8px', borderTop: '1px dashed #cbd5e1', paddingTop: '6px' }}>
-                <strong>Ghi chú bổ sung:</strong> {quotation.note}
-              </div>
-            )}
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <tbody>
+                {visibleTerms.map((term, idx) => (
+                  <tr key={term.id || idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                    <td style={{ padding: '3.5px 6px', width: '145px', verticalAlign: 'top', fontWeight: 700, color: '#0f172a', whiteSpace: 'nowrap', fontSize: '11.5px' }}>
+                      {idx + 1}. {term.term_title}
+                    </td>
+                    <td style={{ padding: '3.5px 6px', verticalAlign: 'top', color: '#334155', fontSize: '11.5px', lineHeight: 1.35, whiteSpace: 'pre-line' }}>
+                      {term.term_content}
+                    </td>
+                  </tr>
+                ))}
+                {quotation.note && (
+                  <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
+                    <td style={{ padding: '3.5px 6px', width: '145px', verticalAlign: 'top', fontWeight: 700, color: '#0f172a', whiteSpace: 'nowrap', fontSize: '11.5px' }}>
+                      Ghi chú bổ sung
+                    </td>
+                    <td style={{ padding: '3.5px 6px', verticalAlign: 'top', color: '#334155', fontSize: '11.5px', lineHeight: 1.35, whiteSpace: 'pre-line' }}>
+                      {quotation.note}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
 
           {/* 7. Lời cảm ơn */}
@@ -330,31 +363,32 @@ export default function QuotationPrintPreviewModal({
               fontStyle: 'italic',
               fontWeight: 700,
               color: '#0f766e',
-              fontSize: '13px',
-              marginBottom: '24px',
-              paddingRight: '10px',
+              fontSize: '12px',
+              marginTop: '4px',
+              marginBottom: '12px',
+              paddingRight: '6px',
             }}
           >
             Chân thành cám ơn Quý khách!
           </div>
 
           {/* 8. Signatures */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '20px', padding: '0 40px' }}>
-            <div style={{ textAlign: 'center', width: '220px' }}>
-              <div style={{ fontWeight: 700, fontSize: '12.5px', textTransform: 'uppercase', color: '#0f172a' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '12px', padding: '0 35px' }}>
+            <div style={{ textAlign: 'center', width: '190px' }}>
+              <div style={{ fontWeight: 700, fontSize: '11.5px', textTransform: 'uppercase', color: '#0f172a' }}>
                 ĐẠI DIỆN KHÁCH HÀNG
               </div>
-              <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>(Ký và ghi rõ họ tên)</div>
-              <div style={{ height: '65px' }} />
-              <div style={{ fontWeight: 600, fontSize: '12px', color: '#1e293b' }}>{customerName}</div>
+              <div style={{ fontSize: '10.5px', color: '#64748b', marginTop: '1px' }}>(Ký và ghi rõ họ tên)</div>
+              <div style={{ height: '45px' }} />
+              <div style={{ fontWeight: 600, fontSize: '11.5px', color: '#1e293b' }}>{customerName}</div>
             </div>
-            <div style={{ textAlign: 'center', width: '220px' }}>
-              <div style={{ fontWeight: 700, fontSize: '12.5px', textTransform: 'uppercase', color: '#0f172a' }}>
+            <div style={{ textAlign: 'center', width: '190px' }}>
+              <div style={{ fontWeight: 700, fontSize: '11.5px', textTransform: 'uppercase', color: '#0f172a' }}>
                 ĐẠI DIỆN BÁN HÀNG
               </div>
-              <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>(Ký và ghi rõ họ tên)</div>
-              <div style={{ height: '65px' }} />
-              <div style={{ fontWeight: 600, fontSize: '12px', color: '#1e293b' }}>{saleFullName}</div>
+              <div style={{ fontSize: '10.5px', color: '#64748b', marginTop: '1px' }}>(Ký và ghi rõ họ tên)</div>
+              <div style={{ height: '45px' }} />
+              <div style={{ fontWeight: 600, fontSize: '11.5px', color: '#1e293b' }}>{saleFullName}</div>
             </div>
           </div>
         </div>

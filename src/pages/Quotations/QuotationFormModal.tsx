@@ -379,6 +379,7 @@ export default function QuotationFormModal({
                 <thead>
                   <tr>
                     <th style={{ ...thBase, width: '36px' }}>STT</th>
+                    <th style={{ ...thBase, width: '50px', textAlign: 'center' }}>Ảnh</th>
                     <th style={thBase}>Mã SP</th>
                     <th style={thBase}>Tên sản phẩm</th>
                     <th style={thBase}>Hãng</th>
@@ -395,7 +396,7 @@ export default function QuotationFormModal({
                 <tbody>
                   {items.length === 0 ? (
                     <tr>
-                      <td colSpan={12} style={{ padding: '32px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                      <td colSpan={13} style={{ padding: '32px', textAlign: 'center', color: 'var(--text-muted)' }}>
                         Chưa có sản phẩm nào. Bấm [+ Thêm sản phẩm] để bắt đầu.
                       </td>
                     </tr>
@@ -403,6 +404,7 @@ export default function QuotationFormModal({
                     items.map((item, index) => {
                       const { product, quantity, sale_price, priceMode, discountPercent, note: itemNote } = item;
                       const isWarning = sale_price < product.dp_price && sale_price > 0;
+                      const imgUrl = product.image_url || product.images?.[0];
 
                       return (
                         <tr
@@ -411,6 +413,20 @@ export default function QuotationFormModal({
                         >
                           {/* STT */}
                           <td style={tdBase}>{index + 1}</td>
+
+                          {/* Ảnh */}
+                          <td style={{ ...tdBase, textAlign: 'center', padding: '4px' }}>
+                            {imgUrl ? (
+                              <img
+                                src={imgUrl}
+                                alt=""
+                                style={{ maxWidth: '42px', maxHeight: '42px', objectFit: 'contain', borderRadius: '3px', display: 'inline-block' }}
+                                onError={(e) => {
+                                  (e.target as HTMLElement).style.display = 'none';
+                                }}
+                              />
+                            ) : null}
+                          </td>
 
                           {/* Mã SP */}
                           <td style={{ ...tdBase, fontWeight: 500, color: 'var(--primary)' }}>{product.product_code}</td>
@@ -575,12 +591,12 @@ export default function QuotationFormModal({
           </div>
 
           {/* ============================================================ */}
-          {/* CÁC ĐIỀU KHOẢN KÈM THEO                                       */}
+          {/* CÁC ĐIỀU KHOẢN KÈM THEO (COMPACT INLINE ROWS)                */}
           {/* ============================================================ */}
-          <div style={{ border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '16px', backgroundColor: 'var(--bg-surface-light)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-              <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <FileCheck size={18} />
+          <div style={{ border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '12px', backgroundColor: 'var(--bg-surface-light)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+              <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700, color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <FileCheck size={16} />
                 CÁC ĐIỀU KHOẢN KÈM THEO
               </h4>
               <div style={{ display: 'flex', gap: '8px' }}>
@@ -588,78 +604,79 @@ export default function QuotationFormModal({
                   type="button"
                   className="btn btn-outline text-sm"
                   onClick={handleResetTerms}
-                  style={{ padding: '4px 8px', fontSize: '0.78rem' }}
+                  style={{ padding: '3px 8px', fontSize: '0.75rem' }}
                   title="Khôi phục các điều khoản mẫu ban đầu"
                 >
-                  <RotateCcw size={13} />
+                  <RotateCcw size={12} />
                   Mặc định
                 </button>
                 <button
                   type="button"
                   className="btn btn-outline text-sm"
                   onClick={handleAddTerm}
-                  style={{ padding: '4px 8px', fontSize: '0.78rem' }}
+                  style={{ padding: '3px 8px', fontSize: '0.75rem' }}
                 >
-                  <Plus size={13} />
+                  <Plus size={12} />
                   Thêm điều khoản
                 </button>
               </div>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               {terms.map((term, index) => (
                 <div
                   key={term.id || index}
                   style={{
                     display: 'flex',
-                    flexDirection: 'column',
-                    gap: '6px',
-                    padding: '10px 12px',
-                    background: term.is_visible ? 'var(--bg-surface)' : 'rgba(0,0,0,0.03)',
+                    alignItems: 'flex-start',
+                    gap: '8px',
+                    padding: '6px 8px',
+                    background: term.is_visible ? 'var(--bg-surface)' : 'rgba(0,0,0,0.02)',
                     border: '1px solid var(--border-color)',
-                    borderRadius: '6px',
+                    borderRadius: '4px',
                     opacity: term.is_visible ? 1 : 0.6,
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
-                      <input
-                        type="checkbox"
-                        checked={term.is_visible}
-                        onChange={() => handleToggleTerm(index)}
-                        title="Bật/tắt hiển thị điều khoản này"
-                      />
-                      <span style={{ fontWeight: 700, fontSize: '0.85rem' }}>{index + 1}.</span>
-                      <input
-                        type="text"
-                        className="form-input"
-                        style={{ fontWeight: 600, flex: 1, padding: '4px 8px', fontSize: '0.85rem' }}
-                        value={term.term_title}
-                        onChange={(e) => handleUpdateTermTitle(index, e.target.value)}
-                        placeholder="Tiêu đề điều khoản (VD: Đơn giá, Thanh toán...)"
-                      />
-                    </div>
-                    <button
-                      type="button"
-                      className="btn-icon text-danger"
-                      onClick={() => handleRemoveTerm(index)}
-                      title="Xóa điều khoản này"
-                      style={{ padding: '4px' }}
-                    >
-                      <Trash2 size={14} />
-                    </button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', width: '170px', flexShrink: 0, marginTop: '4px' }}>
+                    <input
+                      type="checkbox"
+                      checked={term.is_visible}
+                      onChange={() => handleToggleTerm(index)}
+                      title="Bật/tắt hiển thị điều khoản này"
+                      style={{ cursor: 'pointer' }}
+                    />
+                    <span style={{ fontWeight: 700, fontSize: '0.8rem', color: 'var(--text-muted)' }}>{index + 1}.</span>
+                    <input
+                      type="text"
+                      className="form-input"
+                      style={{ fontWeight: 600, width: '125px', padding: '3px 6px', fontSize: '0.8rem' }}
+                      value={term.term_title}
+                      onChange={(e) => handleUpdateTermTitle(index, e.target.value)}
+                      placeholder="Tiêu đề"
+                    />
                   </div>
 
-                  {term.is_visible && (
+                  <div style={{ flex: 1 }}>
                     <textarea
                       className="form-input"
-                      rows={2}
-                      style={{ fontSize: '0.85rem', width: '100%', resize: 'vertical' }}
+                      rows={term.term_content.includes('\n') ? 2 : 1}
+                      style={{ fontSize: '0.8rem', width: '100%', padding: '4px 6px', resize: 'vertical', lineHeight: 1.35 }}
                       value={term.term_content}
                       onChange={(e) => handleUpdateTermContent(index, e.target.value)}
-                      placeholder="Nội dung chi tiết của điều khoản (hỗ trợ xuống dòng)..."
+                      placeholder="Nội dung điều khoản..."
+                      disabled={!term.is_visible}
                     />
-                  )}
+                  </div>
+
+                  <button
+                    type="button"
+                    className="btn-icon text-danger"
+                    onClick={() => handleRemoveTerm(index)}
+                    title="Xóa điều khoản này"
+                    style={{ padding: '4px', marginTop: '2px', background: 'transparent', border: 'none', cursor: 'pointer' }}
+                  >
+                    <Trash2 size={14} />
+                  </button>
                 </div>
               ))}
             </div>

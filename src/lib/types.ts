@@ -39,6 +39,8 @@ export interface Product extends BaseEntity {
   available_quantity: number; // computed: stock_quantity - reserved_quantity
   status: ProductStatus;
   description?: string;
+  image_url?: string;
+  images?: string[];
 }
 
 // --- Customer ---
@@ -365,6 +367,7 @@ export interface SaleQuotationItem {
   product_name: string;
   brand: string;
   unit: string;
+  image_url?: string;   // Ảnh sản phẩm
   // Snapshot giá tại thời điểm tạo báo giá
   listed_price: number; // Giá NY sau VAT
   dp_price: number;     // Giá DP

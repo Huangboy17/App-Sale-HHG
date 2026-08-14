@@ -74,6 +74,7 @@ export const useSaleQuotationStore = create<SaleQuotationState>((set, get) => ({
       product_name: item.product.product_name,
       brand: item.product.brand || '',
       unit: item.product.unit,
+      image_url: item.product.image_url || item.product.images?.[0] || undefined,
       listed_price: item.product.base_price,
       dp_price: item.product.dp_price,
       // Sale input
