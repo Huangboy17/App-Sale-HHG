@@ -16,6 +16,7 @@ interface SaleQuotationState {
   quotations: SaleQuotation[];
   loading: boolean;
   loadByCustomer: (customerId: string) => Promise<void>;
+  loadAllQuotations: () => Promise<void>;
   createQuotation: (
     customerId: string,
     items: Array<{
@@ -50,6 +51,22 @@ export const useSaleQuotationStore = create<SaleQuotationState>((set, get) => ({
       }
     } catch (error) {
       console.error('Failed to load sale quotations', error);
+      set({ loading: false });
+    }
+  },
+
+  loadAllQuotations: async () => {
+    set({ loading: true });
+    try {
+      if (useSupabase()) {
+        const quotations = await supaDb.getSaleQuotations();
+        set({ quotations, loading: false });
+      } else {
+        const quotations = db.getSaleQuotations();
+        set({ quotations, loading: false });
+      }
+    } catch (error) {
+      console.error('Failed to load all sale quotations', error);
       set({ loading: false });
     }
   },

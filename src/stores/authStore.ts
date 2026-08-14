@@ -270,7 +270,9 @@ export const useAuthStore = create<AuthState>((set) => ({
       console.error('[Auth] updatePassword error:', err);
       let msg = 'Đổi mật khẩu thất bại';
 
-      if (err.message?.includes('Password should be at least') || err.code === 'weak_password') {
+      if (err.message?.includes('different from the old password') || err.code === 'same_password') {
+        msg = 'Mật khẩu mới phải khác với mật khẩu cũ đang sử dụng!';
+      } else if (err.message?.includes('Password should be at least') || err.code === 'weak_password') {
         msg = 'Mật khẩu mới phải có ít nhất 6 ký tự';
       } else if (err.message?.includes('Auth session missing') || err.message?.includes('jwt') || err.status === 401) {
         msg = 'Phiên khôi phục mật khẩu đã hết hạn hoặc không hợp lệ. Vui lòng yêu cầu lại liên kết mới.';
