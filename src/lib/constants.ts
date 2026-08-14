@@ -51,6 +51,35 @@ export const PRODUCT_STATUS_LABELS: Record<string, string> = {
   DISCONTINUED: 'Ngừng sản xuất',
 };
 
+// --- Customer Status ---
+export const CUSTOMER_STATUS_LABELS: Record<string, string> = {
+  NEW: 'Khách hàng mới',
+  APPROACHING: 'Đang tiếp cận',
+  CONSULTING: 'Đang tư vấn',
+  QUOTED: 'Đã gửi báo giá',
+  TRACKING: 'Đang theo dõi',
+  NEGOTIATING: 'Đang đàm phán',
+  WON: 'Đã chốt',
+  LOST: 'Không chốt',
+  PAUSED: 'Tạm dừng',
+};
+
+export const CUSTOMER_STATUS_COLORS: Record<string, string> = {
+  NEW: 'info',
+  APPROACHING: 'info',
+  CONSULTING: 'warning',
+  QUOTED: 'warning',
+  TRACKING: 'info',
+  NEGOTIATING: 'warning',
+  WON: 'success',
+  LOST: 'danger',
+  PAUSED: 'default',
+};
+
+export const CUSTOMER_STATUS_ORDER = [
+  'NEW', 'APPROACHING', 'CONSULTING', 'QUOTED', 'TRACKING', 'NEGOTIATING', 'WON', 'LOST', 'PAUSED'
+] as const;
+
 // --- Order Status ---
 export const ORDER_STATUS_LABELS: Record<string, string> = {
   CONFIRMED: 'Xác nhận',
@@ -278,4 +307,26 @@ export const CODE_PREFIXES = {
   QUOTATION: 'BG',
   ORDER: 'DH',
   CONTRACT: 'HD',
+  SALE_QUOTATION: 'BG',
 } as const;
+
+// --- Sale Quotation Status (Customer-linked) ---
+export const SALE_QUOTATION_STATUS_LABELS: Record<string, string> = {
+  DRAFT: 'Nháp',
+  SENT: 'Đã gửi',
+  TRACKING: 'Đang theo dõi',
+  NEGOTIATING: 'Đang đàm phán',
+  WON: 'Đã chốt',
+  LOST: 'Không chốt',
+  EXPIRED: 'Hết hiệu lực',
+};
+
+export const SALE_QUOTATION_STATUS_COLORS: Record<string, string> = {
+  DRAFT: 'default',
+  SENT: 'info',
+  TRACKING: 'info',
+  NEGOTIATING: 'warning',
+  WON: 'success',
+  LOST: 'danger',
+  EXPIRED: 'default',
+};

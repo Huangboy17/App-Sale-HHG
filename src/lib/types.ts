@@ -42,7 +42,7 @@ export interface Product extends BaseEntity {
 }
 
 // --- Customer ---
-export type CustomerStatus = 'TRACKING' | 'WON' | 'LOST';
+export type CustomerStatus = 'NEW' | 'APPROACHING' | 'CONSULTING' | 'QUOTED' | 'TRACKING' | 'NEGOTIATING' | 'WON' | 'LOST' | 'PAUSED';
 
 export interface Customer extends BaseEntity {
   customer_name: string;
@@ -241,6 +241,32 @@ export interface InventoryTransaction extends BaseEntity {
   created_by?: string;
 }
 
+// --- Opportunity (compatibility with existing stores) ---
+export type OpportunityStatus = 'LEAD' | 'CONSULTING' | 'QUOTING' | 'SENT' | 'NEGOTIATING' | 'WON' | 'LOST';
+export type Priority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+
+export interface Opportunity extends BaseEntity {
+  opportunity_code: string;
+  customer_id: string;
+  project_id?: string;
+  estimated_value: number;
+  status: OpportunityStatus;
+  priority: Priority;
+  rejection_notes?: string;
+  assigned_sale_id?: string;
+  notes?: string;
+}
+
+// --- Project (compatibility with existing stores) ---
+export type ProjectStatus = 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+
+export interface Project extends BaseEntity {
+  project_name: string;
+  customer_id: string;
+  status: ProjectStatus;
+  description?: string;
+}
+
 // --- Audit Log ---
 export type AuditAction = 'CREATE' | 'UPDATE' | 'DELETE' | 'STATUS_CHANGE';
 
@@ -287,4 +313,43 @@ export interface DashboardKPI {
   changeLabel?: string;
   icon?: string;
   color?: string;
+}
+
+// --- Sale Quotation (Customer-linked, independent per quotation) ---
+export type SaleQuotationStatus =
+  | 'DRAFT'
+  | 'SENT'
+  | 'TRACKING'
+  | 'NEGOTIATING'
+  | 'WON'
+  | 'LOST'
+  | 'EXPIRED';
+
+export interface SaleQuotation extends BaseEntity {
+  quotation_code: string;
+  customer_id: string;
+  quotation_date: string;
+  status: SaleQuotationStatus;
+  total_amount: number;
+  note?: string;
+  created_by?: string;
+}
+
+export interface SaleQuotationItem {
+  id: string;
+  quotation_id: string;
+  product_id: string;
+  // Snapshot sản phẩm tại thời điểm tạo báo giá
+  product_code: string;
+  product_name: string;
+  brand: string;
+  unit: string;
+  // Snapshot giá tại thời điểm tạo báo giá
+  listed_price: number; // Giá NY sau VAT
+  dp_price: number;     // Giá DP
+  // Sale input
+  quantity: number;
+  sale_price: number;
+  // Computed
+  amount: number;       // quantity × sale_price
 }

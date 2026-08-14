@@ -20,7 +20,7 @@ const MENU_GROUPS = [
   {
     label: 'SẢN PHẨM',
     items: [
-      { path: '/products', label: 'Sản phẩm', icon: 'Package', implemented: true }
+      { path: '/products', label: 'Sản phẩm & Tồn kho', icon: 'Package', implemented: true }
     ]
   }
 ];

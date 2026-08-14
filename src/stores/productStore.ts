@@ -1,11 +1,14 @@
 import { create } from 'zustand';
 import type { Product, ProductStatus } from '../lib/types';
 import { db } from '../lib/database';
+import { parseExcelFile, autoDetectColumns, importPriceList, importInventory } from '../lib/excelImport';
+import type { ImportResult } from '../lib/excelImport';
 
 interface ProductFilters {
   brand?: string;
   group?: string;
   status?: ProductStatus;
+  stockFilter?: 'all' | 'in_stock' | 'low_stock' | 'out_of_stock';
 }
 
 interface ProductState {
@@ -20,6 +23,8 @@ interface ProductState {
   updateProduct: (id: string, product: Partial<Product>) => void;
   setSearchQuery: (query: string) => void;
   setFilters: (filters: Partial<ProductFilters>) => void;
+  importPriceListFile: (file: File) => Promise<ImportResult>;
+  importInventoryFile: (file: File) => Promise<ImportResult>;
 }
 
 export const useProductStore = create<ProductState>((set, get) => ({
@@ -47,6 +52,15 @@ export const useProductStore = create<ProductState>((set, get) => ({
       if (filters.brand) filtered = filtered.filter(p => p.brand === filters.brand);
       if (filters.group) filtered = filtered.filter(p => p.product_group === filters.group);
       if (filters.status) filtered = filtered.filter(p => p.status === filters.status);
+
+      // Stock filter
+      if (filters.stockFilter === 'in_stock') {
+        filtered = filtered.filter(p => p.stock_quantity > 10);
+      } else if (filters.stockFilter === 'low_stock') {
+        filtered = filtered.filter(p => p.stock_quantity >= 1 && p.stock_quantity <= 10);
+      } else if (filters.stockFilter === 'out_of_stock') {
+        filtered = filtered.filter(p => p.stock_quantity === 0);
+      }
       
       const brands = [...new Set(allProducts.map(p => p.brand).filter(Boolean))];
       const groups = [...new Set(allProducts.map(p => p.product_group).filter(Boolean))];
@@ -76,5 +90,21 @@ export const useProductStore = create<ProductState>((set, get) => ({
   setFilters: (newFilters) => {
     set((state) => ({ filters: { ...state.filters, ...newFilters } }));
     get().loadProducts();
-  }
+  },
+
+  importPriceListFile: async (file: File): Promise<ImportResult> => {
+    const parsed = await parseExcelFile(file);
+    const mapping = autoDetectColumns(parsed.headers, 'price');
+    const result = importPriceList(parsed.rows, mapping);
+    get().loadProducts();
+    return result;
+  },
+
+  importInventoryFile: async (file: File): Promise<ImportResult> => {
+    const parsed = await parseExcelFile(file);
+    const mapping = autoDetectColumns(parsed.headers, 'inventory');
+    const result = importInventory(parsed.rows, mapping);
+    get().loadProducts();
+    return result;
+  },
 }));

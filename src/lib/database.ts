@@ -2,7 +2,8 @@ import { v4 as uuidv4 } from 'uuid';
 import type { 
   Product, Customer, Transaction, Quotation, QuotationVersion, 
   QuotationItem, Contract, ContractItem, Payment, Activity, 
-  User, AuditLog, Order, OrderItem
+  User, AuditLog, Order, OrderItem,
+  SaleQuotation, SaleQuotationItem
 } from './types';
 
 export const KEYS = {
@@ -18,6 +19,8 @@ export const KEYS = {
   ACTIVITIES: 'smapp_activities',
   USERS: 'smapp_users',
   AUDIT_LOGS: 'smapp_audit_logs',
+  SALE_QUOTATIONS: 'smapp_sale_quotations',
+  SALE_QUOTATION_ITEMS: 'smapp_sale_quotation_items',
 };
 
 class Database {
@@ -105,6 +108,174 @@ class Database {
 
   public addAuditLog(log: Omit<AuditLog, 'id' | 'created_at'>): void {
     this.create(KEYS.AUDIT_LOGS, log as any);
+  }
+
+  public getUser(id: string): User | undefined {
+    return this.findById<User>(KEYS.USERS, id);
+  }
+
+  public getUserByEmail(email: string): User | undefined {
+    return this.findAll<User>(KEYS.USERS).find(user => user.email === email);
+  }
+
+  public createUser(data: Partial<User> & { email: string; full_name: string; role: any }): User {
+    return this.create<User>(KEYS.USERS, {
+      ...data,
+      is_active: true
+    } as User);
+  }
+
+  // --- Product Methods ---
+  public getProducts(): Product[] {
+    return this.findAll<Product>(KEYS.PRODUCTS);
+  }
+
+  public getProductByCode(code: string): Product | undefined {
+    return this.findAll<Product>(KEYS.PRODUCTS).find(p => p.product_code === code);
+  }
+
+  public createProduct(data: any): Product {
+    const base_price = Number(data.base_price) || 0;
+    const max_discount_rate = Number(data.max_discount_rate) || 0;
+    const vat_rate = Number(data.vat_rate) || 0.08;
+    const stock_quantity = Number(data.stock_quantity) || 0;
+    const reserved_quantity = Number(data.reserved_quantity) || 0;
+    const dp_price = data.dp_price !== undefined && data.dp_price !== null && data.dp_price !== ''
+      ? Number(data.dp_price)
+      : (max_discount_rate > 0 ? base_price * (1 - max_discount_rate) : base_price);
+
+    return this.create<Product>(KEYS.PRODUCTS, {
+      ...data,
+      base_price,
+      max_discount_rate,
+      vat_rate,
+      dp_price,
+      stock_quantity,
+      reserved_quantity,
+      available_quantity: stock_quantity - reserved_quantity,
+      status: data.status || 'ACTIVE',
+    } as Product);
+  }
+
+  public updateProduct(id: string, data: Partial<Product>): Product {
+    const existing = this.findById<Product>(KEYS.PRODUCTS, id);
+    if (!existing) throw new Error(`Product ${id} not found`);
+
+    const merged = { ...existing, ...data };
+    const dp_price = data.dp_price !== undefined && data.dp_price !== null
+      ? Number(data.dp_price)
+      : existing.dp_price ?? merged.base_price;
+    const available_quantity = merged.stock_quantity - merged.reserved_quantity;
+
+    return this.update<Product>(KEYS.PRODUCTS, id, {
+      ...data,
+      dp_price,
+      available_quantity,
+    });
+  }
+
+  // --- Customer Methods ---
+  public getCustomers(): Customer[] {
+    return this.findAll<Customer>(KEYS.CUSTOMERS);
+  }
+
+  public createCustomer(data: any): Customer {
+    return this.create<Customer>(KEYS.CUSTOMERS, {
+      ...data,
+      status: data.status || 'NEW',
+      is_active: data.is_active !== undefined ? data.is_active : true,
+    } as Customer);
+  }
+
+  public updateCustomer(id: string, data: Partial<Customer>): Customer {
+    return this.update<Customer>(KEYS.CUSTOMERS, id, data);
+  }
+
+  public deleteCustomer(id: string): void {
+    this.delete(KEYS.CUSTOMERS, id);
+  }
+
+  // --- User Methods ---
+  public getUsers(): User[] {
+    return this.findAll<User>(KEYS.USERS);
+  }
+
+  // --- Opportunity Stubs (maps to transactions for compatibility) ---
+  public getOpportunities(): any[] {
+    return this.findAll(KEYS.TRANSACTIONS);
+  }
+
+  public createOpportunity(data: any): any {
+    return this.create(KEYS.TRANSACTIONS, { ...data, transaction_code: this.getNextCode('TRX') });
+  }
+
+  public updateOpportunity(id: string, data: any): any {
+    return this.update(KEYS.TRANSACTIONS, id, data);
+  }
+
+  // --- Project Stubs ---
+  public getProjects(): any[] {
+    return [];
+  }
+
+  public createProject(_data: any): any {
+    return null;
+  }
+
+  public updateProject(_id: string, _data: any): any {
+    return null;
+  }
+
+  // --- Sale Quotation Methods (Customer-linked) ---
+  public getSaleQuotations(): SaleQuotation[] {
+    return this.findAll<SaleQuotation>(KEYS.SALE_QUOTATIONS);
+  }
+
+  public getSaleQuotationsByCustomer(customerId: string): SaleQuotation[] {
+    return this.findAll<SaleQuotation>(KEYS.SALE_QUOTATIONS)
+      .filter(q => q.customer_id === customerId)
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  }
+
+  public createSaleQuotation(data: Omit<SaleQuotation, 'id' | 'created_at' | 'updated_at'>): SaleQuotation {
+    return this.create<SaleQuotation>(KEYS.SALE_QUOTATIONS, {
+      ...data,
+      status: data.status || 'DRAFT',
+    } as SaleQuotation);
+  }
+
+  public updateSaleQuotation(id: string, data: Partial<SaleQuotation>): SaleQuotation {
+    return this.update<SaleQuotation>(KEYS.SALE_QUOTATIONS, id, data);
+  }
+
+  public getSaleQuotationItems(quotationId: string): SaleQuotationItem[] {
+    return this.findAll<SaleQuotationItem>(KEYS.SALE_QUOTATION_ITEMS)
+      .filter(item => item.quotation_id === quotationId);
+  }
+
+  public setSaleQuotationItems(quotationId: string, items: SaleQuotationItem[]): void {
+    // Remove existing items for this quotation
+    const allItems = this.findAll<SaleQuotationItem>(KEYS.SALE_QUOTATION_ITEMS)
+      .filter(item => item.quotation_id !== quotationId);
+    // Add new items
+    const newItems = items.map(item => ({
+      ...item,
+      id: item.id || uuidv4(),
+      quotation_id: quotationId,
+    }));
+    this.set(KEYS.SALE_QUOTATION_ITEMS, [...allItems, ...newItems]);
+  }
+
+  public generateSaleQuotationCode(): string {
+    const now = new Date();
+    const dateStr = now.getFullYear().toString() +
+      (now.getMonth() + 1).toString().padStart(2, '0') +
+      now.getDate().toString().padStart(2, '0');
+    const prefix = 'BG-' + dateStr + '-';
+    const existing = this.findAll<SaleQuotation>(KEYS.SALE_QUOTATIONS)
+      .filter(q => q.quotation_code.startsWith(prefix));
+    const nextNum = existing.length + 1;
+    return prefix + nextNum.toString().padStart(3, '0');
   }
 
   public seedDemoData(): void {

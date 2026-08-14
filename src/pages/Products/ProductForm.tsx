@@ -14,7 +14,6 @@ interface ProductFormProps {
 export default function ProductForm({ isOpen, onClose, product }: ProductFormProps) {
   const { addProduct, updateProduct, brands, groups } = useProductStore();
   
-  
   const [formData, setFormData] = useState({
     product_code: '',
     product_name: '',
@@ -22,8 +21,7 @@ export default function ProductForm({ isOpen, onClose, product }: ProductFormPro
     product_group: groups[0] || '',
     unit: 'Cái',
     base_price: 0,
-    max_discount_rate: 0,
-    vat_rate: 8,
+    dp_price: 0,
     stock_quantity: 0,
     description: '',
     status: 'ACTIVE' as Product['status']
@@ -38,16 +36,13 @@ export default function ProductForm({ isOpen, onClose, product }: ProductFormPro
         product_group: product.product_group,
         unit: product.unit,
         base_price: product.base_price,
-        max_discount_rate: product.max_discount_rate,
-        vat_rate: product.vat_rate,
+        dp_price: product.dp_price ?? product.base_price,
         stock_quantity: product.stock_quantity,
         description: product.description || '',
         status: product.status
       });
     }
   }, [product]);
-
-  const dpPrice = formData.base_price * (1 - formData.max_discount_rate / 100);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -140,56 +135,53 @@ export default function ProductForm({ isOpen, onClose, product }: ProductFormPro
 
         <div className="form-row">
           <div className="form-group">
-            <label className="form-label">Giá gốc <span className="text-red-500">*</span></label>
+            <label className="form-label">Giá NY sau VAT <span className="text-red-500">*</span></label>
             <input 
               type="number" 
               min="0"
               className="form-input" 
               required
               value={formData.base_price}
-              onChange={(e) => setFormData({...formData, base_price: Number(e.target.value)})}
+              onChange={(e) => {
+                const val = Number(e.target.value);
+                setFormData(prev => ({
+                  ...prev,
+                  base_price: val,
+                  dp_price: (!product && prev.dp_price === 0) ? val : prev.dp_price
+                }));
+              }}
             />
           </div>
           <div className="form-group">
-            <label className="form-label">Hệ số CK tối đa (%)</label>
+            <label className="form-label">Giá DP (Giá sàn)</label>
             <input 
               type="number" 
               min="0"
-              max="100"
               className="form-input" 
-              value={formData.max_discount_rate}
-              onChange={(e) => setFormData({...formData, max_discount_rate: Number(e.target.value)})}
+              value={formData.dp_price}
+              onChange={(e) => setFormData({...formData, dp_price: Number(e.target.value)})}
             />
           </div>
         </div>
 
-        <div className="bg-blue-50 p-4 rounded-lg mb-4 border border-blue-100 flex justify-between items-center">
-          <span className="font-semibold text-blue-800">Giá DP (Đại lý phân phối)</span>
-          <span className="text-xl font-bold text-blue-900">{formatVND(dpPrice)}</span>
-        </div>
+        {formData.dp_price > formData.base_price && formData.base_price > 0 && (
+          <div style={{
+            padding: '0.5rem 0.75rem', background: 'var(--danger-light)', color: 'var(--danger)',
+            borderRadius: 'var(--radius-md)', fontSize: '0.8rem', marginBottom: '1rem'
+          }}>
+            ⚠ Cảnh báo: Giá DP đang lớn hơn Giá NY sau VAT!
+          </div>
+        )}
 
-        <div className="form-row">
-          <div className="form-group">
-            <label className="form-label">VAT (%)</label>
-            <input 
-              type="number" 
-              min="0"
-              max="100"
-              className="form-input" 
-              value={formData.vat_rate}
-              onChange={(e) => setFormData({...formData, vat_rate: Number(e.target.value)})}
-            />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Tồn kho</label>
-            <input 
-              type="number" 
-              min="0"
-              className="form-input" 
-              value={formData.stock_quantity}
-              onChange={(e) => setFormData({...formData, stock_quantity: Number(e.target.value)})}
-            />
-          </div>
+        <div className="form-group">
+          <label className="form-label">Tồn kho</label>
+          <input 
+            type="number" 
+            min="0"
+            className="form-input" 
+            value={formData.stock_quantity}
+            onChange={(e) => setFormData({...formData, stock_quantity: Number(e.target.value)})}
+          />
         </div>
 
         <div className="form-group">

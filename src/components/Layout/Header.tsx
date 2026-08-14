@@ -5,7 +5,7 @@ import { LogOut, Search, Bell, User } from 'lucide-react';
 
 const routeTitles: Record<string, string> = {
   '/': 'Dashboard',
-  '/products': 'Sản phẩm',
+  '/products': 'Sản phẩm & Tồn kho',
   '/customers': 'Khách hàng',
   '/projects': 'Dự án',
   '/opportunities': 'Cơ hội Bán hàng'

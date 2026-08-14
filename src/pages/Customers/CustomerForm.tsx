@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useCustomerStore } from '../../stores/customerStore';
 import type { Customer, User } from '../../lib/types';
-import { CUSTOMER_SOURCES } from '../../lib/constants';
+import { CUSTOMER_SOURCES, CUSTOMER_STATUS_LABELS } from '../../lib/constants';
 import { db } from '../../lib/database';
 import { Modal } from '../../components/common/Modal';
 
@@ -24,14 +24,15 @@ export default function CustomerForm({ isOpen, onClose, customer }: CustomerForm
     email: '',
     address: '',
     tax_code: '',
-    source: 'DIRECT' as Customer['source'],
+    source: 'direct' as Customer['source'],
+    status: 'NEW' as Customer['status'],
     assigned_sale_id: '',
     notes: ''
   });
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      const allUsers = await db.getUsers();
+    const fetchUsers = () => {
+      const allUsers = db.getUsers();
       setSalesUsers(allUsers.filter(u => u.role === 'SALE' || u.role === 'MANAGER'));
     };
     fetchUsers();
@@ -45,7 +46,8 @@ export default function CustomerForm({ isOpen, onClose, customer }: CustomerForm
         email: customer.email || '',
         address: customer.address || '',
         tax_code: customer.tax_code || '',
-        source: customer.source,
+        source: customer.source || 'direct',
+        status: customer.status || 'NEW',
         assigned_sale_id: customer.assigned_sale_id || '',
         notes: customer.notes || ''
       });
@@ -73,21 +75,21 @@ export default function CustomerForm({ isOpen, onClose, customer }: CustomerForm
     }
   }, [formData.customer_name, formData.phone, formData.email, customers, customer]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (customer) {
-      await updateCustomer(customer.id, formData);
+      updateCustomer(customer.id, formData);
     } else {
-      await addCustomer(formData as any);
+      addCustomer(formData as any);
     }
     onClose();
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={customer ? 'Sửa Khách hàng' : 'Thêm Khách hàng'}>
+    <Modal isOpen={isOpen} onClose={onClose} title={customer ? 'Sửa Khách hàng' : 'Thêm Khách hàng'} size="lg">
       <form onSubmit={handleSubmit}>
         {duplicateWarning && (
-          <div className="bg-yellow-50 text-yellow-800 p-3 rounded-lg mb-4 text-sm font-medium border border-yellow-200">
+          <div className="bg-yellow-50 text-yellow-800 p-3 rounded-lg mb-4 text-sm font-medium border border-yellow-200" style={{ backgroundColor: 'rgba(234, 179, 8, 0.1)', color: 'var(--warning)', borderColor: 'var(--warning)', padding: '0.75rem', borderRadius: 'var(--radius-md)', marginBottom: '1rem' }}>
             {duplicateWarning}
           </div>
         )}
@@ -174,24 +176,38 @@ export default function CustomerForm({ isOpen, onClose, customer }: CustomerForm
               value={formData.source}
               onChange={(e) => setFormData({...formData, source: e.target.value as any})}
             >
+              <option value="">-- Chọn nguồn --</option>
               {CUSTOMER_SOURCES.map((option) => (
                 <option key={option.value} value={option.value}>{option.label}</option>
               ))}
             </select>
           </div>
           <div className="form-group">
-            <label className="form-label">Sale phụ trách</label>
+            <label className="form-label">Tình trạng</label>
             <select 
               className="form-input"
-              value={formData.assigned_sale_id}
-              onChange={(e) => setFormData({...formData, assigned_sale_id: e.target.value})}
+              value={formData.status}
+              onChange={(e) => setFormData({...formData, status: e.target.value as any})}
             >
-              <option value="">-- Chọn Sale --</option>
-              {salesUsers.map(u => (
-                <option key={u.id} value={u.id}>{u.full_name}</option>
+              {Object.entries(CUSTOMER_STATUS_LABELS).map(([key, label]) => (
+                <option key={key} value={key}>{label}</option>
               ))}
             </select>
           </div>
+        </div>
+
+        <div className="form-group">
+          <label className="form-label">Sale phụ trách</label>
+          <select 
+            className="form-input"
+            value={formData.assigned_sale_id}
+            onChange={(e) => setFormData({...formData, assigned_sale_id: e.target.value})}
+          >
+            <option value="">-- Chọn Sale --</option>
+            {salesUsers.map(u => (
+              <option key={u.id} value={u.id}>{u.full_name}</option>
+            ))}
+          </select>
         </div>
 
         <div className="form-group">
@@ -204,7 +220,7 @@ export default function CustomerForm({ isOpen, onClose, customer }: CustomerForm
           />
         </div>
 
-        <div className="modal-footer mt-6">
+        <div className="modal-footer mt-6" style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
           <button type="button" className="btn btn-secondary" onClick={onClose}>
             Hủy
           </button>
