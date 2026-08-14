@@ -19,6 +19,7 @@ export interface User extends BaseEntity {
   role: UserRole;
   avatar_url?: string;
   is_active: boolean;
+  organization_id?: string;
 }
 
 // --- Product Master ---

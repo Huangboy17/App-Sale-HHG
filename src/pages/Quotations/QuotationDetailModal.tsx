@@ -9,6 +9,8 @@ import type {
 import { useSaleQuotationStore } from '../../stores/saleQuotationStore';
 import { formatVND, formatDate, formatDateTime, formatNumber } from '../../lib/formatters';
 import { db, KEYS } from '../../lib/database';
+import { useSupabase } from '../../lib/supabaseClient';
+import * as supaDb from '../../lib/supabaseDatabase';
 import { Save, AlertTriangle, PackageCheck, ShoppingBag, Download, RefreshCw, FileText, Printer } from 'lucide-react';
 import HoldItemsModal from './HoldItemsModal';
 import OrderItemsModal from './OrderItemsModal';
@@ -43,11 +45,15 @@ export default function QuotationDetailModal({ isOpen, onClose, quotation, onSta
     refreshQuotationDispatch 
   } = useSaleQuotationStore();
 
-  const loadDispatchData = useCallback((quoteId: string, currentStatus: SaleQuotationStatus) => {
+  const loadDispatchData = useCallback(async (quoteId: string, currentStatus: SaleQuotationStatus) => {
     if (currentStatus === 'WON') {
-      let dispatch = getQuotationDispatch(quoteId);
+      let dispatch = await getQuotationDispatch(quoteId);
       if (!dispatch) {
-        dispatch = db.createOrUpdateQuotationDispatch(quoteId, false);
+        if (useSupabase()) {
+          dispatch = await supaDb.createOrUpdateQuotationDispatch(quoteId, false);
+        } else {
+          dispatch = db.createOrUpdateQuotationDispatch(quoteId, false);
+        }
       }
       setDispatchSummary(dispatch);
     } else {
@@ -58,45 +64,59 @@ export default function QuotationDetailModal({ isOpen, onClose, quotation, onSta
   useEffect(() => {
     if (isOpen && quotation) {
       setStatus(quotation.status);
-      // Get customer
-      const cust = db.findById<Customer>(KEYS.CUSTOMERS, quotation.customer_id);
-      setCustomer(cust);
-      setCustomerName(cust?.customer_name || 'Khách hàng không tồn tại');
 
-      // Get sale user
-      if (cust?.assigned_sale_id) {
-        const users = db.findAll<User>(KEYS.USERS);
-        const sUser = users.find((u) => u.id === cust.assigned_sale_id);
-        setSaleUser(sUser);
-        setSaleName(sUser?.full_name || '');
-      } else {
-        setSaleUser(undefined);
-        setSaleName('');
-      }
+      const loadDetails = async () => {
+        try {
+          // Get customer
+          let cust: Customer | undefined = undefined;
+          if (useSupabase()) {
+            cust = await supaDb.getCustomer(quotation.customer_id);
+          } else {
+            cust = db.findById<Customer>(KEYS.CUSTOMERS, quotation.customer_id);
+          }
+          setCustomer(cust);
+          setCustomerName(cust?.customer_name || 'Khách hàng không tồn tại');
 
-      // Get snapshot items
-      const qItems = getQuotationItems(quotation.id);
-      setItems(qItems);
+          // Get sale user
+          if (cust?.assigned_sale_id) {
+            const users = useSupabase() ? await supaDb.getUsers() : db.findAll<User>(KEYS.USERS);
+            const sUser = users.find((u) => u.id === cust?.assigned_sale_id);
+            setSaleUser(sUser);
+            setSaleName(sUser?.full_name || '');
+          } else {
+            setSaleUser(undefined);
+            setSaleName('');
+          }
 
-      // Load dispatch data if quotation is WON
-      loadDispatchData(quotation.id, quotation.status);
+          // Get snapshot items
+          const qItems = await getQuotationItems(quotation.id);
+          setItems(qItems);
+
+          // Load dispatch data if quotation is WON
+          await loadDispatchData(quotation.id, quotation.status);
+        } catch (err) {
+          console.error('Failed to load quotation details:', err);
+        }
+      };
+
+      loadDetails();
     }
   }, [isOpen, quotation, getQuotationItems, loadDispatchData]);
 
-  const handleUpdateStatus = () => {
+  const handleUpdateStatus = async () => {
     if (status !== quotation.status) {
-      updateQuotationStatus(quotation.id, status);
-      loadDispatchData(quotation.id, status);
+      await updateQuotationStatus(quotation.id, status);
+      await loadDispatchData(quotation.id, status);
       onStatusUpdated?.();
     }
   };
 
-  const handleRefreshStockSnapshot = () => {
+  const handleRefreshStockSnapshot = async () => {
     const confirmed = window.confirm(
       'Cập nhật lại tồn kho sẽ ghi nhận lại số lượng tồn hiện tại của tất cả sản phẩm tại thời điểm này. Bạn có chắc chắn muốn tiếp tục?'
     );
     if (confirmed) {
-      const refreshed = refreshQuotationDispatch(quotation.id);
+      const refreshed = await refreshQuotationDispatch(quotation.id);
       setDispatchSummary(refreshed);
     }
   };
@@ -569,8 +589,8 @@ export default function QuotationDetailModal({ isOpen, onClose, quotation, onSta
           customer={customer}
           dispatchSummary={dispatchSummary}
           saleName={saleName}
-          onStatusUpdated={() => {
-            const refreshed = getQuotationDispatch(quotation.id);
+          onStatusUpdated={async () => {
+            const refreshed = await getQuotationDispatch(quotation.id);
             if (refreshed) setDispatchSummary(refreshed);
           }}
         />
@@ -585,8 +605,8 @@ export default function QuotationDetailModal({ isOpen, onClose, quotation, onSta
           customer={customer}
           dispatchSummary={dispatchSummary}
           saleName={saleName}
-          onStatusUpdated={() => {
-            const refreshed = getQuotationDispatch(quotation.id);
+          onStatusUpdated={async () => {
+            const refreshed = await getQuotationDispatch(quotation.id);
             if (refreshed) setDispatchSummary(refreshed);
           }}
         />

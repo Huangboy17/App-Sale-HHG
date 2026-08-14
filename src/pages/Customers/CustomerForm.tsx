@@ -3,6 +3,8 @@ import { useCustomerStore } from '../../stores/customerStore';
 import type { Customer, User } from '../../lib/types';
 import { CUSTOMER_SOURCES, CUSTOMER_STATUS_LABELS } from '../../lib/constants';
 import { db } from '../../lib/database';
+import { useSupabase } from '../../lib/supabaseClient';
+import * as supaDb from '../../lib/supabaseDatabase';
 import { Modal } from '../../components/common/Modal';
 
 interface CustomerFormProps {
@@ -31,9 +33,13 @@ export default function CustomerForm({ isOpen, onClose, customer }: CustomerForm
   });
 
   useEffect(() => {
-    const fetchUsers = () => {
-      const allUsers = db.getUsers();
-      setSalesUsers(allUsers.filter(u => u.role === 'SALE' || u.role === 'MANAGER'));
+    const fetchUsers = async () => {
+      try {
+        const allUsers = useSupabase() ? await supaDb.getUsers() : db.getUsers();
+        setSalesUsers(allUsers.filter(u => u.role === 'SALE' || u.role === 'MANAGER'));
+      } catch (err) {
+        console.error('Failed to fetch sales users:', err);
+      }
     };
     fetchUsers();
 

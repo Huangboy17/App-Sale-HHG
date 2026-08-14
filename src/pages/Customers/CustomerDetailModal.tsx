@@ -9,6 +9,8 @@ import type { Customer, CustomerStatus, User, SaleQuotation } from '../../lib/ty
 import { useCustomerStore } from '../../stores/customerStore';
 import { useSaleQuotationStore } from '../../stores/saleQuotationStore';
 import { db } from '../../lib/database';
+import { useSupabase } from '../../lib/supabaseClient';
+import * as supaDb from '../../lib/supabaseDatabase';
 import { formatVND, formatDate as fmtDate } from '../../lib/formatters';
 import { Edit2, Save, Plus, FileText } from 'lucide-react';
 import QuotationFormModal from '../Quotations/QuotationFormModal';
@@ -31,8 +33,15 @@ export default function CustomerDetailModal({ isOpen, onClose, customer, onEdit 
 
   useEffect(() => {
     setStatus(customer.status);
-    const users = db.getUsers();
-    setSalesUsers(users);
+    const fetchUsers = async () => {
+      try {
+        const users = useSupabase() ? await supaDb.getUsers() : db.getUsers();
+        setSalesUsers(users);
+      } catch (err) {
+        console.error('Failed to load users:', err);
+      }
+    };
+    fetchUsers();
     loadByCustomer(customer.id);
   }, [customer, loadByCustomer]);
 

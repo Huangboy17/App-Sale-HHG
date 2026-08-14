@@ -2,6 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Modal } from '../../components/common/Modal';
 import { Search } from 'lucide-react';
 import { db } from '../../lib/database';
+import { useSupabase } from '../../lib/supabaseClient';
+import * as supaDb from '../../lib/supabaseDatabase';
 import type { Product } from '../../lib/types';
 import { formatVND, formatNumber } from '../../lib/formatters';
 
@@ -24,8 +26,15 @@ export default function ProductPickerModal({
 
   useEffect(() => {
     if (isOpen) {
-      const allProducts = db.getProducts();
-      setProducts(allProducts);
+      const fetchProducts = async () => {
+        try {
+          const allProducts = useSupabase() ? await supaDb.getProducts() : db.getProducts();
+          setProducts(allProducts);
+        } catch (err) {
+          console.error('Failed to load products in picker:', err);
+        }
+      };
+      fetchProducts();
       setSearchQuery('');
     }
   }, [isOpen]);

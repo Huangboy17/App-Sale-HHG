@@ -2,6 +2,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { useAuthStore } from './stores/authStore';
 import { db } from './lib/database';
+import { useSupabase } from './lib/supabaseClient';
+import { Loader2 } from 'lucide-react';
 
 // Layout
 import { AppLayout } from './components/Layout/AppLayout';
@@ -14,10 +16,34 @@ import CustomerList from './pages/Customers/CustomerList';
 import TransactionDetail from './pages/Transactions/TransactionDetail';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const { isAuthenticated, loading } = useAuthStore();
+
+  if (loading) {
+    return (
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '100vh',
+          background: 'var(--bg-main, #0f172a)',
+          color: 'var(--text-main, #f8fafc)',
+          gap: '1rem',
+        }}
+      >
+        <Loader2 size={36} className="animate-spin" style={{ color: 'var(--primary, #3b82f6)' }} />
+        <span style={{ fontSize: '0.875rem', color: 'var(--text-muted, #94a3b8)' }}>
+          Đang tải hệ thống...
+        </span>
+      </div>
+    );
+  }
+
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
+
   return <>{children}</>;
 }
 
@@ -25,9 +51,11 @@ function App() {
   const initialize = useAuthStore((s) => s.initialize);
 
   useEffect(() => {
-    // Seed demo data on first load
-    db.seedDemoData();
-    // Restore auth state from localStorage
+    // Only seed demo data if NOT using Supabase
+    if (!useSupabase()) {
+      db.seedDemoData();
+    }
+    // Restore auth state
     initialize();
   }, [initialize]);
 
@@ -49,12 +77,6 @@ function App() {
           <Route path="/products" element={<ProductList />} />
           <Route path="/customers" element={<CustomerList />} />
           <Route path="/transactions/:id" element={<TransactionDetail />} />
-          
-          {/* Removed routes temporarily commented out
-          <Route path="/projects" element={<ProjectList />} />
-          <Route path="/opportunities" element={<OpportunityList />} />
-          <Route path="/opportunities/:id" element={<OpportunityDetail />} />
-          */}
         </Route>
 
         {/* Catch-all */}

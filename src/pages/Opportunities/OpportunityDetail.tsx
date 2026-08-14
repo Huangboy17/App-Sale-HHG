@@ -8,6 +8,8 @@ import { useAuthStore } from '../../stores/authStore';
 import { formatVND, formatDate } from '../../lib/formatters';
 import { OPPORTUNITY_STATUS_LABELS, OPPORTUNITY_STATUS_COLORS, PRIORITY_LABELS, PRIORITY_COLORS, DEFAULT_REJECTION_REASONS } from '../../lib/constants';
 import { db } from '../../lib/database';
+import { useSupabase } from '../../lib/supabaseClient';
+import * as supaDb from '../../lib/supabaseDatabase';
 import type { User } from '../../lib/types';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import OpportunityForm from './OpportunityForm';
@@ -35,8 +37,12 @@ export default function OpportunityDetail() {
     loadCustomers();
     loadProjects();
     const fetchUsers = async () => {
-      const allUsers = await db.getUsers();
-      setUsers(allUsers);
+      try {
+        const allUsers = useSupabase() ? await supaDb.getUsers() : db.getUsers();
+        setUsers(allUsers);
+      } catch (err) {
+        console.error('Failed to fetch users:', err);
+      }
     };
     fetchUsers();
   }, [loadOpportunities, loadCustomers, loadProjects]);

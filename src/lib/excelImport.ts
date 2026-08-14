@@ -5,6 +5,8 @@
 import * as XLSX from 'xlsx';
 import { db } from './database';
 import type { Product } from './types';
+import { useSupabase } from './supabaseClient';
+import * as supaDb from './supabaseDatabase';
 
 // --- Types ---
 
@@ -175,7 +177,6 @@ export function autoDetectColumns(
 // --- Normalize Product Code ---
 
 function normalizeProductCode(raw: string): string {
-  // Trim whitespace but preserve leading zeros and all other characters
   return String(raw).trim();
 }
 
@@ -183,8 +184,6 @@ function normalizeProductCode(raw: string): string {
 
 function parseNumber(raw: string): number {
   if (!raw || raw.trim() === '') return 0;
-  // Remove Vietnamese thousand separators (dots) and replace comma with dot for decimals
-  // "1.200.000" -> "1200000", "0,08" -> "0.08"
   const cleaned = raw.replace(/\./g, '').replace(',', '.');
   const num = parseFloat(cleaned);
   return isNaN(num) ? 0 : num;
@@ -197,16 +196,15 @@ function parsePercentage(raw: string): number {
   const cleaned = raw.replace('%', '').replace(/\./g, '').replace(',', '.').trim();
   const num = parseFloat(cleaned);
   if (isNaN(num)) return 0;
-  // If value is > 1, assume it's a percentage (e.g., 15 = 15% = 0.15)
   return num > 1 ? num / 100 : num;
 }
 
 // --- Import Price List ---
 
-export function importPriceList(
+export async function importPriceList(
   rows: Record<string, string>[],
   mapping: ColumnMapping
-): ImportResult {
+): Promise<ImportResult> {
   const result: ImportResult = {
     created: 0,
     updated: 0,
@@ -221,7 +219,8 @@ export function importPriceList(
     return result;
   }
 
-  const allProducts = db.getProducts();
+  const isSupa = useSupabase();
+  const allProducts = isSupa ? await supaDb.getProducts() : db.getProducts();
   const productMap = new Map<string, Product>();
   allProducts.forEach(p => productMap.set(p.product_code, p));
 
@@ -279,11 +278,17 @@ export function importPriceList(
     try {
       if (existing) {
         // Update existing product — DO NOT touch stock_quantity
-        db.updateProduct(existing.id, updateData);
+        if (isSupa) {
+          const updated = await supaDb.updateProduct(existing.id, updateData);
+          productMap.set(code, updated);
+        } else {
+          const updated = db.updateProduct(existing.id, updateData);
+          productMap.set(code, updated);
+        }
         result.updated++;
       } else {
         // Create new product with stock_quantity = 0
-        db.createProduct({
+        const newProdData = {
           product_code: code,
           product_name: updateData.product_name || code,
           product_group: updateData.product_group || '',
@@ -295,8 +300,16 @@ export function importPriceList(
           vat_rate: updateData.vat_rate ?? 0.08,
           stock_quantity: 0,
           reserved_quantity: 0,
-          status: 'ACTIVE',
-        });
+          status: 'ACTIVE' as const,
+        };
+
+        if (isSupa) {
+          const created = await supaDb.createProduct(newProdData);
+          productMap.set(code, created);
+        } else {
+          const created = db.createProduct(newProdData);
+          productMap.set(code, created);
+        }
         result.created++;
       }
     } catch (error: any) {
@@ -309,10 +322,10 @@ export function importPriceList(
 
 // --- Import Inventory ---
 
-export function importInventory(
+export async function importInventory(
   rows: Record<string, string>[],
   mapping: ColumnMapping
-): ImportResult {
+): Promise<ImportResult> {
   const result: ImportResult = {
     created: 0,
     updated: 0,
@@ -331,7 +344,8 @@ export function importInventory(
     return result;
   }
 
-  const allProducts = db.getProducts();
+  const isSupa = useSupabase();
+  const allProducts = isSupa ? await supaDb.getProducts() : db.getProducts();
   const productMap = new Map<string, Product>();
   allProducts.forEach(p => productMap.set(p.product_code, p));
 
@@ -358,10 +372,12 @@ export function importInventory(
     const quantity = parseNumber(row[mapping.stock_quantity!]);
 
     try {
-      // ONLY update stock_quantity — do NOT touch name, price, group, unit, etc.
-      db.updateProduct(existing.id, {
-        stock_quantity: quantity,
-      } as Partial<Product>);
+      // ONLY update stock_quantity
+      if (isSupa) {
+        await supaDb.updateProduct(existing.id, { stock_quantity: quantity } as Partial<Product>);
+      } else {
+        db.updateProduct(existing.id, { stock_quantity: quantity } as Partial<Product>);
+      }
       result.updated++;
     } catch (error: any) {
       result.errors.push(`Dòng ${i + 2} (${code}): ${error.message || 'Lỗi không xác định'}`);
@@ -421,4 +437,3 @@ export function downloadExcelTemplate(type: 'price' | 'inventory'): void {
     XLSX.writeFile(wb, 'Mau_Import_Ton_Kho.xlsx');
   }
 }
-

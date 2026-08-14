@@ -6,6 +6,8 @@ import { useAuthStore } from '../../stores/authStore';
 import type { Opportunity, User } from '../../lib/types';
 import { PRIORITY_LABELS } from '../../lib/constants';
 import { db } from '../../lib/database';
+import { useSupabase } from '../../lib/supabaseClient';
+import * as supaDb from '../../lib/supabaseDatabase';
 import { Modal } from '../../components/common/Modal';
 
 interface OpportunityFormProps {
@@ -36,8 +38,12 @@ export default function OpportunityForm({ isOpen, onClose, opportunity }: Opport
 
   useEffect(() => {
     const fetchUsers = async () => {
-      const allUsers = await db.getUsers();
-      setSalesUsers(allUsers.filter(u => u.role === 'SALE' || u.role === 'MANAGER'));
+      try {
+        const allUsers = useSupabase() ? await supaDb.getUsers() : db.getUsers();
+        setSalesUsers(allUsers.filter(u => u.role === 'SALE' || u.role === 'MANAGER'));
+      } catch (err) {
+        console.error('Failed to fetch sales users:', err);
+      }
     };
     fetchUsers();
 
