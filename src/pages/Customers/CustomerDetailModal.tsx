@@ -22,7 +22,7 @@ interface CustomerDetailModalProps {
 }
 
 export default function CustomerDetailModal({ isOpen, onClose, customer, onEdit }: CustomerDetailModalProps) {
-  const { updateStatus, loadCustomers } = useCustomerStore();
+  const { updateStatus } = useCustomerStore();
   const { quotations, loadByCustomer } = useSaleQuotationStore();
   const [status, setStatus] = useState<CustomerStatus>(customer.status);
   const [salesUsers, setSalesUsers] = useState<User[]>([]);

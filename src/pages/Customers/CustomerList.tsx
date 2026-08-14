@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { Plus, Search, Filter } from 'lucide-react';
 import { useCustomerStore } from '../../stores/customerStore';
 import type { Customer, CustomerStatus } from '../../lib/types';

@@ -45,7 +45,7 @@ export default function OpportunityForm({ isOpen, onClose, opportunity }: Opport
       setFormData({
         customer_id: opportunity.customer_id,
         project_id: opportunity.project_id || '',
-        assigned_sale_id: opportunity.assigned_sale_id,
+        assigned_sale_id: opportunity.assigned_sale_id || '',
         received_date: opportunity.received_date.split('T')[0],
         expected_close_date: opportunity.expected_close_date ? opportunity.expected_close_date.split('T')[0] : '',
         requirements: opportunity.requirements || '',

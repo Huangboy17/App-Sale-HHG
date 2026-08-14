@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { Modal } from '../../components/common/Modal';
 import { Plus, Trash2, AlertTriangle } from 'lucide-react';
 import type { Customer, Product } from '../../lib/types';

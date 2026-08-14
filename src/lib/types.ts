@@ -252,6 +252,10 @@ export interface Opportunity extends BaseEntity {
   estimated_value: number;
   status: OpportunityStatus;
   priority: Priority;
+  received_date: string;
+  expected_close_date?: string;
+  requirements?: string;
+  rejection_reason_id?: string;
   rejection_notes?: string;
   assigned_sale_id?: string;
   notes?: string;
@@ -264,6 +268,12 @@ export interface Project extends BaseEntity {
   project_name: string;
   customer_id: string;
   status: ProjectStatus;
+  location?: string;
+  investor?: string;
+  contact_person?: string;
+  project_progress?: string;
+  expected_delivery_date?: string;
+  notes?: string;
   description?: string;
 }
 

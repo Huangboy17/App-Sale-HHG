@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useProductStore } from '../../stores/productStore';
 import type { Product } from '../../lib/types';
-import { formatVND } from '../../lib/formatters';
 import { PRODUCT_STATUS_LABELS } from '../../lib/constants';
 import { Modal } from '../../components/common/Modal';
 

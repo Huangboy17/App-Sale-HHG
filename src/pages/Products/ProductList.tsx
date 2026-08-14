@@ -2,20 +2,14 @@ import { useEffect, useState, useMemo } from 'react';
 import { Plus, Search, FileUp, PackageOpen, Download } from 'lucide-react';
 import { useProductStore } from '../../stores/productStore';
 import type { Product } from '../../lib/types';
-import { formatVND, formatPercent } from '../../lib/formatters';
-import { PRODUCT_STATUS_LABELS } from '../../lib/constants';
+import { formatVND } from '../../lib/formatters';
 import { DataTable } from '../../components/common/DataTable';
-import { StatusBadge } from '../../components/common/StatusBadge';
 import { StockIndicator } from '../../components/common/StockIndicator';
 import ProductForm from './ProductForm';
 import ImportExcelModal from './ImportExcelModal';
 import { downloadExcelTemplate } from '../../lib/excelImport';
 
-const PRODUCT_STATUS_COLORS: Record<string, string> = {
-  ACTIVE: 'success',
-  INACTIVE: 'warning',
-  DISCONTINUED: 'danger',
-};
+
 
 const STOCK_FILTER_OPTIONS = [
   { value: 'all', label: 'Tất cả tồn kho' },

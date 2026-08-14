@@ -3,7 +3,7 @@
 // ============================================================
 
 import * as XLSX from 'xlsx';
-import { db, KEYS } from './database';
+import { db } from './database';
 import type { Product } from './types';
 
 // --- Types ---

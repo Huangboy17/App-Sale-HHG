@@ -2,7 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 import type { 
   Product, Customer, Transaction, Quotation, QuotationVersion, 
   QuotationItem, Contract, ContractItem, Payment, Activity, 
-  User, AuditLog, Order, OrderItem,
+  User, AuditLog, Opportunity, Project,
   SaleQuotation, SaleQuotationItem
 } from './types';
 
@@ -72,14 +72,15 @@ class Database {
     return this.findAll<T>(key).find(item => item.id === id);
   }
 
-  public create<T extends { id?: string; created_at?: string; updated_at?: string }>(key: string, data: T): T {
+  public create<T extends object>(key: string, data: T): T {
     const items = this.findAll<T>(key);
     const now = new Date().toISOString();
+    const d = data as any;
     const newItem = { 
       ...data, 
-      id: data.id || uuidv4(), 
-      created_at: data.created_at || now, 
-      updated_at: data.updated_at || now 
+      id: d.id || uuidv4(), 
+      created_at: d.created_at || now, 
+      updated_at: d.updated_at || now 
     } as T;
     items.push(newItem);
     this.set(key, items);
@@ -201,28 +202,28 @@ class Database {
   }
 
   // --- Opportunity Stubs (maps to transactions for compatibility) ---
-  public getOpportunities(): any[] {
-    return this.findAll(KEYS.TRANSACTIONS);
+  public getOpportunities(): Opportunity[] {
+    return this.findAll<Opportunity>(KEYS.TRANSACTIONS);
   }
 
-  public createOpportunity(data: any): any {
-    return this.create(KEYS.TRANSACTIONS, { ...data, transaction_code: this.getNextCode('TRX') });
+  public createOpportunity(data: Partial<Opportunity>): Opportunity {
+    return this.create(KEYS.TRANSACTIONS, { ...data, transaction_code: this.getNextCode('TRX') } as Opportunity) as Opportunity;
   }
 
-  public updateOpportunity(id: string, data: any): any {
-    return this.update(KEYS.TRANSACTIONS, id, data);
+  public updateOpportunity(id: string, data: Partial<Opportunity>): Opportunity {
+    return this.update<Opportunity>(KEYS.TRANSACTIONS, id, data);
   }
 
   // --- Project Stubs ---
-  public getProjects(): any[] {
+  public getProjects(): Project[] {
     return [];
   }
 
-  public createProject(_data: any): any {
+  public createProject(_data: Partial<Project>): Project | null {
     return null;
   }
 
-  public updateProject(_id: string, _data: any): any {
+  public updateProject(_id: string, _data: Partial<Project>): Project | null {
     return null;
   }
 
