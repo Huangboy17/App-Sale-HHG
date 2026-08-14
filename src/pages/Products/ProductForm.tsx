@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useProductStore } from '../../stores/productStore';
-import { useAuthStore } from '../../stores/authStore';
 import type { Product } from '../../lib/types';
 import { formatVND } from '../../lib/formatters';
 import { PRODUCT_STATUS_LABELS } from '../../lib/constants';
@@ -14,9 +13,7 @@ interface ProductFormProps {
 
 export default function ProductForm({ isOpen, onClose, product }: ProductFormProps) {
   const { addProduct, updateProduct, brands, groups } = useProductStore();
-  const { user } = useAuthStore();
   
-  const isSale = user?.role === 'SALE';
   
   const [formData, setFormData] = useState({
     product_code: '',
@@ -149,7 +146,6 @@ export default function ProductForm({ isOpen, onClose, product }: ProductFormPro
               min="0"
               className="form-input" 
               required
-              disabled={isSale}
               value={formData.base_price}
               onChange={(e) => setFormData({...formData, base_price: Number(e.target.value)})}
             />
@@ -161,7 +157,6 @@ export default function ProductForm({ isOpen, onClose, product }: ProductFormPro
               min="0"
               max="100"
               className="form-input" 
-              disabled={isSale}
               value={formData.max_discount_rate}
               onChange={(e) => setFormData({...formData, max_discount_rate: Number(e.target.value)})}
             />
@@ -191,7 +186,6 @@ export default function ProductForm({ isOpen, onClose, product }: ProductFormPro
               type="number" 
               min="0"
               className="form-input" 
-              disabled={isSale}
               value={formData.stock_quantity}
               onChange={(e) => setFormData({...formData, stock_quantity: Number(e.target.value)})}
             />

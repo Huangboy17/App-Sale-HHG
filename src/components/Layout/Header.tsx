@@ -1,13 +1,13 @@
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
-import { LogOut } from 'lucide-react';
+import { LogOut, Search, Bell, User } from 'lucide-react';
 
 const routeTitles: Record<string, string> = {
   '/': 'Dashboard',
-  '/products': 'Quản lý Sản phẩm',
-  '/customers': 'Quản lý Khách hàng',
-  '/projects': 'Quản lý Dự án',
+  '/products': 'Sản phẩm',
+  '/customers': 'Khách hàng',
+  '/projects': 'Dự án',
   '/opportunities': 'Cơ hội Bán hàng'
 };
 
@@ -15,23 +15,41 @@ export const Header: React.FC = () => {
   const location = useLocation();
   const { user, logout } = useAuthStore();
   
-  const title = routeTitles[location.pathname] || 'Sales HHG';
+  const title = routeTitles[location.pathname] || 'SALES PRO';
 
   return (
-    <header className="header glassmorphism">
+    <header className="header">
       <div className="header-left">
         <h2 className="page-title">{title}</h2>
       </div>
-      <div className="header-right">
-        <div className="user-profile-header">
-          <span className="user-name-header">{user?.full_name || 'Người dùng'}</span>
-          <span className="badge badge-primary role-badge">
-            {user?.role === 'ADMIN' ? 'Quản trị viên' : 'Nhân viên'}
-          </span>
+      
+      <div className="flex items-center" style={{ flex: 1, justifyContent: 'center', padding: '0 2rem' }}>
+        <div className="form-control" style={{ maxWidth: '400px', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <Search size={18} className="text-muted" />
+          <input 
+            type="text" 
+            placeholder="Tìm kiếm nhanh..." 
+            style={{ border: 'none', background: 'transparent', outline: 'none', color: 'var(--text-main)', width: '100%' }}
+          />
         </div>
-        <button onClick={logout} className="btn-icon btn-logout" title="Đăng xuất">
-          <LogOut size={20} />
+      </div>
+
+      <div className="header-right">
+        <button className="btn-icon">
+          <Bell size={20} />
         </button>
+        <div className="flex items-center gap-2" style={{ borderLeft: '1px solid var(--border-color)', paddingLeft: '1rem' }}>
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontSize: '0.875rem', fontWeight: 600 }}>{user?.full_name || 'Admin User'}</div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{user?.role || 'Administrator'}</div>
+          </div>
+          <button className="btn-icon" style={{ background: 'var(--primary-light)' }}>
+            <User size={20} />
+          </button>
+          <button onClick={logout} className="btn-icon text-danger" title="Đăng xuất">
+            <LogOut size={20} />
+          </button>
+        </div>
       </div>
     </header>
   );

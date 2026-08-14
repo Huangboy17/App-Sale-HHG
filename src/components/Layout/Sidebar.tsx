@@ -1,72 +1,115 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { useAuthStore } from '../../stores/authStore';
+
 import { useUiStore } from '../../stores/uiStore';
-import { NAV_ITEMS } from '../../lib/constants';
 import * as Icons from 'lucide-react';
 
+const MENU_GROUPS = [
+  {
+    label: 'TỔNG QUAN',
+    items: [
+      { path: '/', label: 'Dashboard', icon: 'LayoutDashboard', implemented: true }
+    ]
+  },
+  {
+    label: 'BÁN HÀNG',
+    items: [
+      { path: '/opportunities', label: 'Cơ hội bán hàng', icon: 'Target', implemented: true },
+      { path: '/quotations', label: 'Báo giá', icon: 'FileText', implemented: false },
+      { path: '/orders', label: 'Đơn hàng', icon: 'ShoppingCart', implemented: false }
+    ]
+  },
+  {
+    label: 'KHÁCH HÀNG',
+    items: [
+      { path: '/customers', label: 'Khách hàng', icon: 'Users', implemented: true },
+      { path: '/projects', label: 'Dự án', icon: 'FolderKanban', implemented: true }
+    ]
+  },
+  {
+    label: 'THỰC HIỆN',
+    items: [
+      { path: '/contracts', label: 'Hợp đồng', icon: 'FileSignature', implemented: false },
+      { path: '/procurement', label: 'Đặt hàng/Hải quan', icon: 'Ship', implemented: false },
+      { path: '/deliveries', label: 'Giao hàng', icon: 'Truck', implemented: false },
+      { path: '/payments', label: 'Thanh toán', icon: 'CreditCard', implemented: false }
+    ]
+  },
+  {
+    label: 'KHO & SẢN PHẨM',
+    items: [
+      { path: '/products', label: 'Sản phẩm', icon: 'Package', implemented: true },
+      { path: '/inventory', label: 'Tồn kho', icon: 'Warehouse', implemented: false }
+    ]
+  },
+  {
+    label: 'BÁO CÁO',
+    items: [
+      { path: '/reports/sales', label: 'Doanh số', icon: 'BarChart2', implemented: false },
+      { path: '/reports/pipeline', label: 'Pipeline', icon: 'PieChart', implemented: false },
+      { path: '/reports/performance', label: 'Hiệu quả Sale', icon: 'TrendingUp', implemented: false },
+      { path: '/reports/lost', label: 'Khách mất', icon: 'UserMinus', implemented: false }
+    ]
+  },
+  {
+    label: 'QUẢN TRỊ',
+    items: [
+      { path: '/admin/import', label: 'Import Data', icon: 'Upload', implemented: false },
+      { path: '/admin/settings', label: 'Cấu hình', icon: 'Settings', implemented: false }
+    ]
+  }
+];
+
 export const Sidebar: React.FC = () => {
-  const { user } = useAuthStore();
-  const { sidebarCollapsed, toggleSidebar } = useUiStore();
+  const { sidebarCollapsed } = useUiStore();
 
   const renderIcon = (iconName: string) => {
     const Icon = (Icons as any)[iconName];
-    return Icon ? <Icon size={20} /> : <Icons.LayoutDashboard size={20} />;
+    return Icon ? <Icon size={20} /> : <Icons.Circle size={20} />;
   };
 
   return (
     <aside className={`sidebar ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
-      <div className="sidebar-header">
+      <div className="sidebar-logo">
         {!sidebarCollapsed ? (
-          <h1 className="logo-text gradient-text">Sales HHG</h1>
+          <span>SALES PRO</span>
         ) : (
-          <h1 className="logo-text gradient-text" style={{ fontSize: '1.5rem', textAlign: 'center', width: '100%' }}>S</h1>
+          <span>SP</span>
         )}
-        <button onClick={toggleSidebar} className="btn-icon sidebar-toggle">
-          {sidebarCollapsed ? <Icons.ChevronRight size={18} /> : <Icons.ChevronLeft size={18} />}
-        </button>
       </div>
 
       <nav className="sidebar-nav">
-        {NAV_ITEMS.map((item) => {
-          const disabledPaths = ['/quotations', '/orders', '/contracts', '/payments', '/deliveries'];
-          const isDisabled = disabledPaths.includes(item.path);
-          return isDisabled ? (
-            <div key={item.path} className="nav-item nav-item-disabled">
-              <span className="nav-icon">{renderIcon(item.icon)}</span>
-              {!sidebarCollapsed && (
-                <>
-                  <span className="nav-label">{item.label}</span>
-                  <span className="badge badge-sm badge-info nav-badge">Sắp ra mắt</span>
-                </>
-              )}
-            </div>
-          ) : (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              className={({ isActive }) => `nav-item ${isActive ? 'nav-item-active' : ''}`}
-            >
-              <span className="nav-icon">{renderIcon(item.icon)}</span>
-              {!sidebarCollapsed && <span className="nav-label">{item.label}</span>}
-            </NavLink>
-          );
-        })}
-      </nav>
-
-      <div className="sidebar-footer">
-        <div className="user-info-wrapper">
-          <div className="avatar">
-            {user?.full_name?.charAt(0).toUpperCase() || 'U'}
+        {MENU_GROUPS.map((group, groupIdx) => (
+          <div key={groupIdx}>
+            {!sidebarCollapsed && <div className="sidebar-group-label">{group.label}</div>}
+            {group.items.map((item) => {
+              if (!item.implemented) {
+                return (
+                  <div key={item.path} className="sidebar-nav-item" style={{ opacity: 0.6 }}>
+                    {renderIcon(item.icon)}
+                    {!sidebarCollapsed && (
+                      <div className="flex items-center justify-between" style={{ width: '100%' }}>
+                        <span>{item.label}</span>
+                        <span className="badge badge-info" style={{ fontSize: '0.6rem' }}>Sắp ra mắt</span>
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+              return (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  className={({ isActive }) => `sidebar-nav-item ${isActive ? 'active' : ''}`}
+                >
+                  {renderIcon(item.icon)}
+                  {!sidebarCollapsed && <span>{item.label}</span>}
+                </NavLink>
+              );
+            })}
           </div>
-          {!sidebarCollapsed && (
-            <div className="user-details">
-              <div className="user-name">{user?.full_name || 'Người dùng'}</div>
-              <div className="user-role">{user?.role === 'ADMIN' ? 'Quản trị viên' : 'Nhân viên'}</div>
-            </div>
-          )}
-        </div>
-      </div>
+        ))}
+      </nav>
     </aside>
   );
 };

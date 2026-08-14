@@ -10,9 +10,9 @@ interface AuthState {
   isAuthenticated: boolean;
   permissions: Permission | null;
   login: (userId: string) => void;
+  loginByEmail: (email: string) => boolean;
   logout: () => void;
-  initialize: () => void; // Load from localStorage on app start
-  getAvailableUsers: () => User[];
+  initialize: () => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -30,6 +30,19 @@ export const useAuthStore = create<AuthState>((set) => ({
       });
     }
   },
+  loginByEmail: (email: string) => {
+    const user = db.getUserByEmail(email);
+    if (user) {
+      setCurrentUserAuth(user.id);
+      set({
+        user,
+        isAuthenticated: true,
+        permissions: ROLE_PERMISSIONS[user.role],
+      });
+      return true;
+    }
+    return false;
+  },
   logout: () => {
     logoutAuth();
     set({ user: null, isAuthenticated: false, permissions: null });
@@ -43,6 +56,5 @@ export const useAuthStore = create<AuthState>((set) => ({
         permissions: ROLE_PERMISSIONS[user.role],
       });
     }
-  },
-  getAvailableUsers: () => db.getUsers(),
+  }
 }));

@@ -8,12 +8,10 @@ export const AppLayout: React.FC = () => {
   return (
     <div className="app-layout">
       <Sidebar />
-      <div className="main-wrapper">
-        <Header />
-        <main className="main-content">
-          <Outlet />
-        </main>
-      </div>
+      <Header />
+      <main className="main-content">
+        <Outlet />
+      </main>
       <ToastContainer />
     </div>
   );

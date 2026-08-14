@@ -8,7 +8,7 @@ import { DataTable } from '../../components/common/DataTable';
 import CustomerForm from './CustomerForm';
 
 export default function CustomerList() {
-  const { customers, loading, loadCustomers } = useCustomerStore();
+  const { customers, loadCustomers } = useCustomerStore();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | undefined>(undefined);
   const [searchTerm, setSearchTerm] = useState('');
@@ -43,7 +43,7 @@ export default function CustomerList() {
     { 
       label: 'Nguồn', 
       key: 'source',
-      render: (_, row: Customer) => {
+      render: (_val: unknown, row: Customer) => {
         const source = CUSTOMER_SOURCES.find(s => s.value === row.source);
         return source ? source.label : row.source;
       }
@@ -51,7 +51,7 @@ export default function CustomerList() {
     { 
       label: 'Sale phụ trách', 
       key: 'assigned_sale_id',
-      render: (_, row: Customer) => users.find(u => u.id === row.assigned_sale_id)?.full_name || '-'
+      render: (_val: unknown, row: Customer) => users.find(u => u.id === row.assigned_sale_id)?.full_name || '-'
     },
   ];
 
@@ -92,7 +92,6 @@ export default function CustomerList() {
         <DataTable
           columns={columns}
           data={filteredCustomers}
-          isLoading={loading}
           onRowClick={handleRowClick}
         />
       </div>

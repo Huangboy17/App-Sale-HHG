@@ -1,88 +1,112 @@
-import { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { User } from '../../lib/types';
 import { db } from '../../lib/database';
 import { useAuthStore } from '../../stores/authStore';
-import { LogIn } from 'lucide-react';
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { login } = useAuthStore();
-  const [users, setUsers] = useState<User[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { loginByEmail } = useAuthStore();
+  const [isLogin, setIsLogin] = useState(true);
+  
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const allUsers = await db.getUsers();
-        setUsers(allUsers);
-      } catch (error) {
-        console.error("Failed to load users", error);
-      } finally {
-        setIsLoading(false);
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isLogin) {
+      let user = db.getUserByEmail(email);
+      if (!user) {
+        user = db.createUser({ full_name: email.split('@')[0], email, role: 'SALE' });
       }
-    };
-    fetchUsers();
-  }, []);
-
-  const handleLogin = (user: User) => {
-    login(user.id);
-    navigate('/');
+      loginByEmail(email);
+      navigate('/');
+    } else {
+      if (password !== confirmPassword) {
+        alert("Mật khẩu không khớp!");
+        return;
+      }
+      let user = db.getUserByEmail(email);
+      if (user) {
+        alert("Email đã được sử dụng!");
+        return;
+      }
+      db.createUser({ full_name: fullName, email, role: 'SALE' });
+      loginByEmail(email);
+      navigate('/');
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="flex justify-center">
-          <div className="w-16 h-16 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg transform rotate-3">
-            <span className="text-white text-3xl font-bold -rotate-3">H</span>
-          </div>
+    <div className="login-container">
+      <div className="login-card">
+        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+          <h2 style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--primary)', marginBottom: '0.5rem' }}>SALES PRO</h2>
+          <p className="text-muted">Hệ thống Quản lý Bán hàng</p>
         </div>
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          Sales HHG
-        </h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
-          Hệ thống Quản lý Bán hàng
-        </p>
-      </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white/80 backdrop-blur-lg py-8 px-4 shadow-xl sm:rounded-2xl sm:px-10 border border-white">
-          <div className="mb-6 text-center">
-            <h3 className="text-lg font-medium text-gray-900">Chọn tài khoản Demo để đăng nhập</h3>
-          </div>
-          
-          {isLoading ? (
-            <div className="flex justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {users.map(user => (
-                <button
-                  key={user.id}
-                  onClick={() => handleLogin(user)}
-                  className="w-full flex items-center justify-between p-4 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md hover:border-blue-300 transition-all text-left group"
-                >
-                  <div className="flex flex-col">
-                    <span className="font-semibold text-gray-900 group-hover:text-blue-700 transition-colors">
-                      {user.full_name}
-                    </span>
-                    <span className="text-sm text-gray-500">{user.email}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className={`px-2.5 py-1 text-xs font-medium rounded-full 
-                      ${user.role === 'ADMIN' ? 'bg-purple-100 text-purple-800' : 
-                        user.role === 'MANAGER' ? 'bg-blue-100 text-blue-800' : 
-                        'bg-green-100 text-green-800'}`}>
-                      {user.role}
-                    </span>
-                    <LogIn size={18} className="text-gray-400 group-hover:text-blue-500 transition-colors" />
-                  </div>
-                </button>
-              ))}
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          {!isLogin && (
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label className="form-label text-muted">Họ tên</label>
+              <input
+                type="text"
+                required
+                className="form-control"
+                value={fullName}
+                onChange={e => setFullName(e.target.value)}
+              />
             </div>
           )}
+          
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label className="form-label text-muted">Tên đăng nhập / Email</label>
+            <input
+              type="email"
+              required
+              className="form-control"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+            />
+          </div>
+
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label className="form-label text-muted">Mật khẩu</label>
+            <input
+              type="password"
+              required
+              className="form-control"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+            />
+          </div>
+
+          {!isLogin && (
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label className="form-label text-muted">Xác nhận mật khẩu</label>
+              <input
+                type="password"
+                required
+                className="form-control"
+                value={confirmPassword}
+                onChange={e => setConfirmPassword(e.target.value)}
+              />
+            </div>
+          )}
+
+          <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '0.75rem', marginTop: '1rem', justifyContent: 'center' }}>
+            {isLogin ? 'ĐĂNG NHẬP' : 'ĐĂNG KÝ'}
+          </button>
+        </form>
+        
+        <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
+          <button
+            onClick={() => setIsLogin(!isLogin)}
+            style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontSize: '0.875rem' }}
+          >
+            {isLogin ? 'Chưa có tài khoản? Đăng ký ngay' : 'Đã có tài khoản? Đăng nhập'}
+          </button>
         </div>
       </div>
     </div>
