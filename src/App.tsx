@@ -15,6 +15,8 @@ import Dashboard from './pages/Dashboard/Dashboard';
 import ProductList from './pages/Products/ProductList';
 import CustomerList from './pages/Customers/CustomerList';
 import TransactionDetail from './pages/Transactions/TransactionDetail';
+import AdminDashboard from './pages/Admin/AdminDashboard';
+import MembersPage from './pages/Admin/MembersPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, loading } = useAuthStore();
@@ -79,6 +81,8 @@ function App() {
           <Route path="/products" element={<ProductList />} />
           <Route path="/customers" element={<CustomerList />} />
           <Route path="/transactions/:id" element={<TransactionDetail />} />
+          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/members" element={<MembersPage />} />
         </Route>
 
         {/* Catch-all */}

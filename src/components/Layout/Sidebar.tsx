@@ -1,10 +1,10 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-
+import { useAuthStore } from '../../stores/authStore';
 import { useUiStore } from '../../stores/uiStore';
 import * as Icons from 'lucide-react';
 
-const MENU_GROUPS = [
+const REGULAR_MENU_GROUPS = [
   {
     label: 'TỔNG QUAN',
     items: [
@@ -25,13 +25,40 @@ const MENU_GROUPS = [
   }
 ];
 
+const LEVEL_1_MENU_GROUPS = [
+  ...REGULAR_MENU_GROUPS,
+  {
+    label: 'TỔ CHỨC',
+    items: [
+      { path: '/members', label: 'Thành viên', icon: 'Users', implemented: true }
+    ]
+  }
+];
+
+const ADMIN_MENU_GROUPS = [
+  {
+    label: 'HỆ THỐNG',
+    items: [
+      { path: '/admin', label: 'Quản trị hệ thống', icon: 'Settings', implemented: true }
+    ]
+  }
+];
+
 export const Sidebar: React.FC = () => {
   const { sidebarCollapsed } = useUiStore();
+  const { user } = useAuthStore();
 
   const renderIcon = (iconName: string) => {
     const Icon = (Icons as any)[iconName];
     return Icon ? <Icon size={20} /> : <Icons.Circle size={20} />;
   };
+
+  const isSuperAdmin = user?.role === 'SUPER_ADMIN';
+  const isLevel1 = user?.role === 'LEVEL_1';
+  
+  const displayGroups = isSuperAdmin 
+    ? ADMIN_MENU_GROUPS 
+    : (isLevel1 ? LEVEL_1_MENU_GROUPS : REGULAR_MENU_GROUPS);
 
   return (
     <aside className={`sidebar ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
@@ -44,7 +71,7 @@ export const Sidebar: React.FC = () => {
       </div>
 
       <nav className="sidebar-nav">
-        {MENU_GROUPS.map((group, groupIdx) => (
+        {displayGroups.map((group, groupIdx) => (
           <div key={groupIdx}>
             {!sidebarCollapsed && <div className="sidebar-group-label">{group.label}</div>}
             {group.items.map((item) => {

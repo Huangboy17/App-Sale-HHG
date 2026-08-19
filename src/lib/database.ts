@@ -361,15 +361,61 @@ class Database {
     console.log('Seeding CRM data for Transaction-Centric Model...');
     const now = new Date().toISOString();
     
-    const users: User[] = [{
-      id: uuidv4(),
-      full_name: 'Admin User',
-      role: 'ADMIN',
-      email: 'admin@sale.com',
-      is_active: true,
-      created_at: now,
-      updated_at: now
-    }];
+    const users: User[] = [
+      {
+        id: uuidv4(),
+        full_name: 'Admin User',
+        role: 'ADMIN',
+        email: 'admin@sale.com',
+        is_active: true,
+        account_status: 'active',
+        created_at: now,
+        updated_at: now
+      },
+      {
+        id: uuidv4(),
+        full_name: 'Super Admin',
+        role: 'SUPER_ADMIN',
+        email: 'superadmin@sale.com',
+        is_active: true,
+        account_status: 'active',
+        created_at: now,
+        updated_at: now
+      },
+      {
+        id: 'lvl1-demo-id', // fixed ID for testing
+        full_name: 'Công ty Khách Hàng VIP',
+        role: 'LEVEL_1',
+        email: 'khachhang@level1.com',
+        is_active: true,
+        account_status: 'active',
+        max_members: 10,
+        created_at: now,
+        updated_at: now
+      },
+      {
+        id: uuidv4(),
+        full_name: 'Nhân viên KH 1',
+        role: 'LEVEL_2',
+        email: 'nv1@level1.com',
+        is_active: true,
+        account_status: 'active',
+        parent_id: 'lvl1-demo-id',
+        created_at: now,
+        updated_at: now
+      },
+      {
+        id: uuidv4(),
+        full_name: 'Nhân viên KH 2',
+        role: 'LEVEL_2',
+        email: 'nv2@level1.com',
+        is_active: true,
+        account_status: 'blocked',
+        parent_id: 'lvl1-demo-id',
+        created_at: now,
+        updated_at: now
+      }
+    ];
     this.set(KEYS.USERS, users);
     const defaultUserId = users[0].id;
 
