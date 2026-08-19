@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Users, UserCheck, ShieldAlert, Search, Lock, Unlock } from 'lucide-react';
 import { adminService } from '../../services/adminService';
 import type { User, AccountStatus } from '../../lib/types';

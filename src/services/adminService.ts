@@ -1,6 +1,6 @@
 import { useSupabase } from '../lib/supabaseClient';
 import { db, KEYS } from '../lib/database';
-import type { User, UserRole, AccountStatus } from '../lib/types';
+import type { User, AccountStatus } from '../lib/types';
 
 export const adminService = {
   async fetchAllProfiles(): Promise<User[]> {

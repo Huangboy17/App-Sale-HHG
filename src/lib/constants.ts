@@ -139,6 +139,9 @@ export const PROJECT_STATUS_LABELS: Record<string, string> = {
 
 // --- Role Labels & Permissions ---
 export const ROLE_LABELS: Record<UserRole, string> = {
+  SUPER_ADMIN: 'Super Admin',
+  LEVEL_1: 'Khách hàng (Level 1)',
+  LEVEL_2: 'Thành viên (Level 2)',
   ADMIN: 'Quản trị viên',
   SALE: 'Nhân viên Sale',
   SALES_MANAGER: 'Trưởng nhóm Sale',
