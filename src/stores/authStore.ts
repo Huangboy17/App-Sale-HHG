@@ -70,6 +70,19 @@ export const useAuthStore = create<AuthState>((set) => ({
       const profile = await supaDb.supabaseGetCurrentProfile();
 
       if (profile) {
+        if (profile.status === 'PENDING' || profile.account_status === 'pending') {
+          await logoutAuth();
+          const msg = 'Tài khoản của bạn đang chờ phê duyệt từ Super Admin.';
+          set({ loading: false, error: msg });
+          return { success: false, error: msg };
+        }
+        if (profile.status === 'SUSPENDED' || profile.status === 'REJECTED' || profile.account_status === 'blocked' || profile.account_status === 'archived') {
+          await logoutAuth();
+          const msg = 'Tài khoản của bạn đã bị khóa hoặc từ chối.';
+          set({ loading: false, error: msg });
+          return { success: false, error: msg };
+        }
+
         let org: OrganizationInfo | null = null;
         try {
           org = await supaDb.getOrganization();
@@ -115,7 +128,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
   },
 
-  signup: async (email: string, password: string, fullName: string, role = 'SALE') => {
+  signup: async (email: string, password: string, fullName: string, role = 'LEVEL_1') => {
     set({ loading: true, error: null });
 
     try {
@@ -311,6 +324,18 @@ export const useAuthStore = create<AuthState>((set) => ({
         console.log('[Auth] Session restored for user:', session.user.id);
         const profile = await supaDb.supabaseGetCurrentProfile();
         if (profile) {
+          if (profile.status === 'PENDING' || profile.account_status === 'pending' || profile.status === 'SUSPENDED' || profile.status === 'REJECTED' || profile.account_status === 'blocked') {
+            await logoutAuth();
+            set({
+              user: null,
+              organization: null,
+              isAuthenticated: false,
+              permissions: null,
+              loading: false,
+            });
+            return;
+          }
+
           let org: OrganizationInfo | null = null;
           try {
             org = await supaDb.getOrganization();

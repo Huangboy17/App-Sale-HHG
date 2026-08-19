@@ -10,8 +10,8 @@ export interface BaseEntity {
 }
 
 // --- User & Auth ---
-export type UserRole = 'SUPER_ADMIN' | 'LEVEL_1' | 'LEVEL_2' | 'ADMIN' | 'SALE' | 'SALES_MANAGER' | 'ACCOUNTING' | 'WAREHOUSE' | 'MANAGER';
-export type AccountStatus = 'active' | 'pending' | 'blocked' | 'archived';
+export type UserRole = 'SUPER_ADMIN' | 'LEVEL_1' | 'LEVEL_2' | 'ADMIN' | 'SALE' | 'SALES_MANAGER' | 'ACCOUNTING' | 'WAREHOUSE' | 'MANAGER' | 'VIEWER';
+export type AccountStatus = 'ACTIVE' | 'PENDING' | 'REJECTED' | 'SUSPENDED' | 'active' | 'pending' | 'blocked' | 'archived';
 
 export interface User extends BaseEntity {
   email: string;
@@ -19,11 +19,13 @@ export interface User extends BaseEntity {
   phone?: string;
   role: UserRole;
   avatar_url?: string;
-  is_active: boolean; // kept for legacy compatibility, use account_status
-  account_status?: AccountStatus;
+  is_active: boolean; // kept for legacy compatibility, use status
+  status?: AccountStatus;
+  account_status?: AccountStatus; // kept for legacy compatibility
   organization_id?: string;
   parent_id?: string; // For level_2 to reference level_1
-  max_members?: number; // Quota for level_1
+  level_2_limit?: number; // New column from SQL
+  max_members?: number; // Legacy column // Quota for level_1
 }
 
 // --- Product Master ---

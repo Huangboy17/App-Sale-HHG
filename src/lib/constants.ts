@@ -148,6 +148,7 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   ACCOUNTING: 'Kế toán',
   WAREHOUSE: 'Kho',
   MANAGER: 'Quản lý',
+  VIEWER: 'Người xem',
 };
 
 export interface Permission {
@@ -311,6 +312,22 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission> = {
     canUpdatePayment: true,
     canUpdateDelivery: true,
     canApproveDiscount: true,
+  },
+  VIEWER: {
+    canCreateCustomer: false,
+    canCreateOpportunity: false,
+    canCreateQuotation: false,
+    canEditBasePrice: false,
+    canEditMaxDiscount: false,
+    canEditDpPrice: false,
+    canEditStock: false,
+    canViewInternalPricing: false,
+    canViewAllOpportunities: true,
+    canViewDashboard: true,
+    canManageUsers: false,
+    canUpdatePayment: false,
+    canUpdateDelivery: false,
+    canApproveDiscount: false,
   },
 };
 

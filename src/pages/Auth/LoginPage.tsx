@@ -40,7 +40,7 @@ export default function LoginPage() {
         return;
       }
 
-      const res = await signup(email.trim(), password, fullName.trim(), 'SALE');
+      const res = await signup(email.trim(), password, fullName.trim(), 'LEVEL_1');
       if (res.success) {
         if (useAuthStore.getState().isAuthenticated) {
           navigate('/');

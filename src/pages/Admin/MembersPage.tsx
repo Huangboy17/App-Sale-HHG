@@ -48,10 +48,12 @@ export default function MembersPage() {
 
   const kpis = {
     total: members.length,
-    active: members.filter(u => u.account_status === 'active' || u.is_active).length,
-    blocked: members.filter(u => u.account_status === 'blocked').length,
-    quota: user.max_members || 5,
+    active: members.filter(u => u.status === 'ACTIVE' || u.account_status === 'active' || u.is_active).length,
+    blocked: members.filter(u => u.status === 'SUSPENDED' || u.account_status === 'blocked').length,
+    quota: user?.level_2_limit || user?.max_members || 5,
   };
+
+  const isLimitReached = kpis.total >= kpis.quota;
 
   return (
     <div className="flex flex-col h-[calc(100vh-100px)]">
@@ -61,6 +63,14 @@ export default function MembersPage() {
           <h1 className="text-xl">Quản lý thành viên</h1>
           <p className="text-sm text-muted">Quản lý tài khoản nhân viên (Level 2)</p>
         </div>
+        <button 
+          className="btn btn-primary" 
+          disabled={isLimitReached}
+          title={isLimitReached ? 'Đã đạt giới hạn tài khoản LEVEL 2. Vui lòng liên hệ Super Admin.' : ''}
+          onClick={() => alert('Chức năng tạo mới chưa được implement giao diện modal')}
+        >
+          + Tạo tài khoản LEVEL 2
+        </button>
       </div>
 
       {/* KPIs */}
@@ -128,7 +138,10 @@ export default function MembersPage() {
                 <tr><td colSpan={5} className="text-center py-4 text-muted">Không có dữ liệu</td></tr>
               ) : (
                 filteredMembers.map(member => {
-                  const status = member.account_status || (member.is_active ? 'active' : 'blocked');
+                  const status = member.status || member.account_status || (member.is_active ? 'active' : 'blocked');
+                  const isActive = status === 'ACTIVE' || status === 'active';
+                  const isBlocked = status === 'SUSPENDED' || status === 'blocked';
+                  
                   return (
                     <tr key={member.id} className="hover:bg-[rgba(255,255,255,0.02)]">
                       <td className="py-2">
@@ -148,18 +161,18 @@ export default function MembersPage() {
                       </td>
                       <td className="py-2 text-[13px]">{member.role}</td>
                       <td className="py-2">
-                        {status === 'active' && <span className="badge badge-success text-[11px]">Hoạt động</span>}
-                        {status === 'pending' && <span className="badge badge-warning text-[11px]">Chờ duyệt</span>}
-                        {status === 'blocked' && <span className="badge badge-danger text-[11px]">Đã khóa</span>}
-                        {status === 'archived' && <span className="badge badge-default text-[11px]">Đã xóa</span>}
+                        {isActive && <span className="badge badge-success text-[11px]">Hoạt động</span>}
+                        {(status === 'PENDING' || status === 'pending') && <span className="badge badge-warning text-[11px]">Chờ duyệt</span>}
+                        {isBlocked && <span className="badge badge-danger text-[11px]">Đã khóa</span>}
+                        {(status === 'archived') && <span className="badge badge-default text-[11px]">Đã xóa</span>}
                       </td>
                       <td className="py-2 text-right">
                         <button 
                           className="btn-icon"
-                          onClick={() => updateStatus(member.id, status === 'blocked' ? 'active' : 'blocked')}
-                          title={status === 'blocked' ? "Mở khóa" : "Khóa tài khoản"}
+                          onClick={() => updateStatus(member.id, isBlocked ? 'ACTIVE' : 'SUSPENDED')}
+                          title={isBlocked ? "Mở khóa" : "Khóa tài khoản"}
                         >
-                          {status === 'blocked' ? <Unlock size={18} className="text-success" /> : <Lock size={18} className="text-danger" />}
+                          {isBlocked ? <Unlock size={18} className="text-success" /> : <Lock size={18} className="text-danger" />}
                         </button>
                       </td>
                     </tr>

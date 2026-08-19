@@ -11,6 +11,13 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedProfile, setSelectedProfile] = useState<User | null>(null);
+  const [limitToSet, setLimitToSet] = useState(5);
+
+  useEffect(() => {
+    if (selectedProfile) {
+      setLimitToSet(selectedProfile.level_2_limit || selectedProfile.max_members || 5);
+    }
+  }, [selectedProfile]);
 
   useEffect(() => {
     fetchProfiles();
@@ -28,9 +35,11 @@ export default function AdminDashboard() {
     }
   };
 
-  const updateStatus = async (id: string, status: AccountStatus) => {
+  const updateStatus = async (id: string, status: AccountStatus, extra?: { level_2_limit?: number }) => {
     try {
-      await adminService.updateProfileStatus(id, status);
+      // Pass extra to updateProfileStatus if supported, otherwise you'd need a separate call
+      // We will update adminService.updateProfileStatus to accept extra
+      await adminService.updateProfileStatus(id, status, extra);
       await fetchProfiles();
     } catch (error) {
       console.error('Failed to update status:', error);
@@ -51,9 +60,9 @@ export default function AdminDashboard() {
 
   const kpis = {
     total: level1Users.length,
-    active: level1Users.filter(u => u.account_status === 'active' || u.is_active).length,
-    pending: level1Users.filter(u => u.account_status === 'pending').length,
-    blocked: level1Users.filter(u => u.account_status === 'blocked').length,
+    active: level1Users.filter(u => u.status === 'ACTIVE' || u.account_status === 'active').length,
+    pending: level1Users.filter(u => u.status === 'PENDING' || u.account_status === 'pending').length,
+    blocked: level1Users.filter(u => u.status === 'SUSPENDED' || u.status === 'REJECTED' || u.account_status === 'blocked').length,
   };
 
   return (
@@ -165,32 +174,41 @@ export default function AdminDashboard() {
                       </td>
                       <td className="py-2">
                         <div className="text-[13px]">
-                          {subCount} / {profile.max_members || 5}
+                          {subCount} / {profile.level_2_limit || profile.max_members || 5}
                         </div>
                         <div className="w-full bg-slate-800 rounded-full h-1.5 mt-1" style={{ maxWidth: '100px' }}>
                           <div 
                             className="bg-primary h-1.5 rounded-full" 
-                            style={{ width: `${Math.min(100, (subCount / (profile.max_members || 5)) * 100)}%` }}
+                            style={{ width: `${Math.min(100, (subCount / (profile.level_2_limit || profile.max_members || 5)) * 100)}%` }}
                           />
                         </div>
                       </td>
                       <td className="py-2">
-                        {status === 'active' && <span className="badge badge-success text-[11px]">Hoạt động</span>}
-                        {status === 'pending' && <span className="badge badge-warning text-[11px]">Chờ duyệt</span>}
-                        {status === 'blocked' && <span className="badge badge-danger text-[11px]">Đã khóa</span>}
-                        {status === 'archived' && <span className="badge badge-default text-[11px]">Đã xóa</span>}
+                        {(status === 'ACTIVE' || status === 'active') && <span className="badge badge-success text-[11px]">Hoạt động</span>}
+                        {(status === 'PENDING' || status === 'pending') && <span className="badge badge-warning text-[11px]">Chờ duyệt</span>}
+                        {(status === 'SUSPENDED' || status === 'blocked') && <span className="badge badge-danger text-[11px]">Đã khóa</span>}
+                        {(status === 'REJECTED') && <span className="badge badge-danger text-[11px]">Từ chối</span>}
+                        {(status === 'archived') && <span className="badge badge-default text-[11px]">Đã xóa</span>}
                       </td>
                       <td className="py-2 text-right">
-                        <div className="relative inline-block" onClick={e => e.stopPropagation()}>
-                           <select 
+                        <div className="flex justify-end gap-2" onClick={e => e.stopPropagation()}>
+                          {status === 'pending' || status === 'PENDING' ? (
+                            <>
+                              <button 
+                                className="btn btn-primary py-1 px-2 text-xs"
+                                onClick={() => setSelectedProfile(profile)}
+                              >Duyệt / Từ chối</button>
+                            </>
+                          ) : (
+                            <select 
                               className="bg-transparent border border-gray-600 rounded text-sm p-1 outline-none cursor-pointer"
-                              value={status}
+                              value={status === 'ACTIVE' || status === 'active' ? 'active' : status === 'SUSPENDED' || status === 'blocked' ? 'blocked' : status}
                               onChange={(e) => updateStatus(profile.id, e.target.value as AccountStatus)}
                             >
-                             <option value="active" className="text-black">Hoạt động</option>
-                             <option value="pending" className="text-black">Chờ duyệt</option>
-                             <option value="blocked" className="text-black">Khóa</option>
-                           </select>
+                              <option value="active" className="text-black">Hoạt động</option>
+                              <option value="blocked" className="text-black">Khóa</option>
+                            </select>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -237,18 +255,47 @@ export default function AdminDashboard() {
               {/* Info & KPI Grid */}
               <div className="shrink-0 grid grid-cols-3 gap-4 mb-4">
                 <div className="card p-3">
-                  <div className="text-xs text-muted mb-1">Hạn mức thành viên</div>
-                  <div className="text-lg font-bold">{getSubCount(selectedProfile.id)} / {selectedProfile.max_members || 5}</div>
+                  <div className="text-xs text-muted mb-1">Hạn mức thành viên (Level 2)</div>
+                  {selectedProfile.status === 'PENDING' || selectedProfile.account_status === 'pending' ? (
+                    <input 
+                      type="number" 
+                      min={0}
+                      className="form-input mt-1 w-24" 
+                      value={limitToSet}
+                      onChange={e => setLimitToSet(Number(e.target.value))}
+                    />
+                  ) : (
+                    <div className="text-lg font-bold">{getSubCount(selectedProfile.id)} / {selectedProfile.level_2_limit || selectedProfile.max_members || 5}</div>
+                  )}
                 </div>
                 <div className="card p-3">
                   <div className="text-xs text-muted mb-1">Trạng thái</div>
-                  <div className="text-lg font-bold capitalize">{selectedProfile.account_status || 'active'}</div>
+                  <div className="text-lg font-bold capitalize">{selectedProfile.status || selectedProfile.account_status || 'active'}</div>
                 </div>
                 <div className="card p-3">
                   <div className="text-xs text-muted mb-1">Ngày tạo</div>
                   <div className="text-sm font-bold mt-1">{new Date(selectedProfile.created_at).toLocaleDateString()}</div>
                 </div>
               </div>
+
+              {(selectedProfile.status === 'PENDING' || selectedProfile.account_status === 'pending') && (
+                <div className="shrink-0 flex gap-3 mb-4">
+                  <button 
+                    className="btn btn-primary"
+                    onClick={() => {
+                      updateStatus(selectedProfile.id, 'ACTIVE', { level_2_limit: limitToSet });
+                      setSelectedProfile(null);
+                    }}
+                  >Phê duyệt & Lưu</button>
+                  <button 
+                    className="btn btn-default text-red-500 border-red-500 hover:bg-red-500 hover:text-white"
+                    onClick={() => {
+                      updateStatus(selectedProfile.id, 'REJECTED');
+                      setSelectedProfile(null);
+                    }}
+                  >Từ chối</button>
+                </div>
+              )}
 
               {/* Members List */}
               <div className="flex-1 min-h-0 flex flex-col card p-0 overflow-hidden border-t">
